@@ -1,1 +1,1 @@
-(ns project-from-problem.core)
+(ns foreclojure-plugin.core)

@@ -1,4 +1,4 @@
-# project-from-problem
+# foreclojure-plugin
 
 FIXME: write description
 
