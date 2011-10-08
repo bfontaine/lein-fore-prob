@@ -4,7 +4,6 @@
                  [org.clojure/clojure-contrib "1.2.0"]])
 
 (ns leiningen.foreclojure-problem
-  ; WARNING: bytes already refers to: #'clojure.core/bytes in namespace: leiningen.foo, being replaced by: #'clojure.contrib.http.agent/bytes
   (:use [clojure.contrib.http.agent :only(http-agent string)]
         [clojure.contrib.json]
         [clojure.java.io :only [file]]
@@ -20,7 +19,7 @@
 (defn title->fn [title]
   (.toLowerCase (cs/replace title #"[^\w]" "-")))
 
-; Format too?
+;; XXX - Format too?
 (defn expand-prob [prob tests]
   (->>
    (map #(cs/replace % #"\b__\b" (str prob "-solution")) tests)
@@ -33,8 +32,17 @@
           (str "\n(deftest can-" prob "\n" (expand-prob prob (problem :tests)) "\n)\n")
           :append true)))
 
+;; TODO - Pay attention to args once JSON API hits 4clojure.
+;;      - Write solution stub in src.
+;;      - Don't add deftest if one already exists.
 (defn foreclojure-problem [project & args]
-  (let [json (read-json (string (http-agent "http://localhost/example.json" :method "GET")))]
-    (write-tests project json)))
+  (try
+    (let [json (read-json (string (http-agent "http://localhost/example.json" :method "GET")))]
+      (write-tests project json)
+      (println "Problem added!"))
+    (catch Exception e
+      (println (str "Failed setting problem" args ": " (.getMessage e)))
+      (shutdown-agents)
+      )))
 
 ; {:compile-path "/home/dbrook/dev/4clojure/foreclojure-plugin/classes", :group "foreclojure-plugin", :source-path "/home/dbrook/dev/4clojure/foreclojure-plugin/src", :dependencies [[org.clojure/clojure "1.2.1"] [org.clojure/clojure-contrib "1.2.0"]], :dev-dependencies nil, :name "foreclojure-plugin", :root "/home/dbrook/dev/4clojure/foreclojure-plugin", :jar-dir "/home/dbrook/dev/4clojure/foreclojure-plugin", :version "1.0.0-SNAPSHOT", :jar-exclusions [#"^\."], :test-path "/home/dbrook/dev/4clojure/foreclojure-plugin/test", :test-resources-path "/home/dbrook/dev/4clojure/foreclojure-plugin/test-resources", :target-dir "/home/dbrook/dev/4clojure/foreclojure-plugin", :uberjar-exclusions [#"^META-INF/DUMMY.SF"], :dev-resources-path "/home/dbrook/dev/4clojure/foreclojure-plugin/test-resources", :library-path "/home/dbrook/dev/4clojure/foreclojure-plugin/lib", :resources-path "/home/dbrook/dev/4clojure/foreclojure-plugin/resources", :native-path "/home/dbrook/dev/4clojure/foreclojure-plugin/native", :description "FIXME: write description"}
