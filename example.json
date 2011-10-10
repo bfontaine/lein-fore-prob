@@ -1,16 +1,16 @@
 {
-"description": "Given a mathematical formula in prefix notation, return a function that calculates\nthe value of the formula.\nThe formula can contain nested calculations using the four basic\nmathematical operators, numeric constants, and symbols representing variables.\nThe returned function has to accept a single parameter containing the map\nof variable names to their values.\n",
-"difficulty": "Medium",
-"restricted": [ ],
-"tags": [
-"functions"
-],
-"tests": [
-"(= 2 ((__ '(/ a b))\n'{b 8 a 16}))",
-"(= 8 ((__ '(+ a b 2))\n'{a 2 b 4}))",
-"(= [6 0 -4]\n(map (__ '(* (+ 2 a)\n(- 10 b)))\n'[{a 1 b 8}\n{b 5 a -2}\n{a 2 b 11}]))",
-"(= 1 ((__ '(/ (+ x 2)\n(* 3 (+ y 1))))\n'{x 4 y 1}))"
-],
-"title": "Universal Computation Engine",
-"user": "mlni"
+   "difficulty" : "Medium",
+   "tests" : [
+      "(= 2 ((__ '(/ a b))\r\n      '{b 8 a 16}))",
+      "(= 8 ((__ '(+ a b 2))\r\n      '{a 2 b 4}))",
+      "(= [6 0 -4]\r\n     (map (__ '(* (+ 2 a)\r\n  \t              (- 10 b)))\r\n\t        '[{a 1 b 8}\r\n\t          {b 5 a -2}\r\n\t          {a 2 b 11}]))",
+      "(= 1 ((__ '(/ (+ x 2)\r\n              (* 3 (+ y 1))))\r\n      '{x 4 y 1}))\r\n"
+   ],
+   "user" : "mlni",
+   "title" : "Universal Computation Engine",
+   "description" : "\t Given a mathematical formula in prefix notation, return a function that calculates\r\n\t the value of the formula.\r\n\t The formula can contain nested calculations using the four basic\r\n\t mathematical operators, numeric constants, and symbols representing variables.\r\n\t The returned function has to accept a single parameter containing the map\r\n\t of variable names to their values.\r\n",
+   "tags" : [
+      "functions"
+   ],
+   "restricted" : []
 }
