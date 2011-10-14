@@ -1,1 +1,0 @@
-(ns foreclojure-plugin.core)
