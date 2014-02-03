@@ -19,12 +19,19 @@
     (if (re-find r t)
       (spit fn (cs/replace t r "")))))
 
+(defn- desc->comments
+  "format a problem description as Clojure comments with one level of
+   indentation"
+  [desc]
+  (str "  ;; " (cs/replace #"\r?\n" "\n  ;; ")))
+
 (defn- add-stub [project prob]
   (let [src (io/file "src" (ns->path (project :group)) "core.clj")]
     (if-not (re-find (re-pattern (str "(?m)^\\(defn " prob)) (slurp src))
       (spit src
             (str "\n(defn " prob "-solution [] ; Update args as needed!\n"
-                 "nil\n)\n")
+                 (-> project :description desc->comments)
+                 "nil)\n")
             :append true))))
 
 (defn- no-test-yet [fn prob]
@@ -45,13 +52,13 @@
 (defn- write-tests [project problem]
   (let [prob      (title->fn (problem :title))
         test-file (io/file
-                    "test" (ns->path (project :group)) "test" "core.clj")]
+                    "test" (ns->path (project :group)) "core_test.clj")]
     (add-stub project prob)
     (drop-replace-me test-file)    
     (if (no-test-yet test-file prob)
       (spit test-file
             (str "\n(deftest can-" prob "\n"
-                 (expand-prob prob (problem :tests)) "\n)\n")
+                 (expand-prob prob (problem :tests)) ")\n")
             :append true)
       true)))
 
