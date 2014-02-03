@@ -5,15 +5,21 @@
   (:use [clojure.string :as cs :exclude [replace reverse]]))
 
 ;; Purloined from leiningen/src/leiningen/util/paths.clj
-(defn- ns->path [n]
+(defn- ns->path
+  "Convert a namespace into a path"
+  [n]
   (str (.. (str n)
            (replace \- \_)
            (replace \. \/))))
 
-(defn- title->fn [title]
+(defn- title->fn
+  "Convert a problem title into a valid function name"
+  [title]
   (.toLowerCase (cs/replace title #"\W" "-")))
 
-(defn- drop-replace-me [fn]
+(defn- drop-replace-me
+  "Remove 'replace-me' tests from a file"
+  [fn]
   (let [t (slurp fn)
         r #"(?m)^\(deftest replace-me[^)]+\)+$"]
     (if (re-find r t)
@@ -34,22 +40,29 @@
                  "nil)\n")
             :append true))))
 
-(defn- no-test-yet [fn prob]
+(defn- no-test-yet
+  "test if there are any fore-prob tests yet"
+  [fn prob]
   (nil? (re-find (re-pattern (str "(?m)^\\(deftest can-" prob)) (slurp fn))))
 
-;; Allow something that might have quotes to live in a string.
 (defn- enquote [s]
+  "Allow something that might have quotes to live in a string"
+  [s]
   (cs/replace s  "\"" "\\\""))
 
 ;; XXX - Format too?
-(defn- expand-prob [prob tests]
+(defn- expand-prob
+  "expand a problem string"
+  [prob tests]
   (->>
    (map #(cs/replace % #"\b__\b" (str prob "-solution")) tests)
    (map #(cs/replace % #"\r?\n" "\n"))
    (map #(cs/join " " ["(is" % "\"" (enquote %) "\")"]))
    (cs/join "\n")))
 
-(defn- write-tests [project problem]
+(defn- write-tests
+  "write tests to the main tests file (core_test.clj)"
+  [project problem]
   (let [prob      (title->fn (problem :title))
         test-file (io/file
                     "test" (ns->path (project :group)) "core_test.clj")]
@@ -64,14 +77,18 @@
 
 (def fore-url "http://4clojure.com/api/problem/")
 
-(defn get-prob [n]
+(defn get-prob
+  "Return a problem map from its number using 4clojure API"
+  [n]
   (let [req (http/get (str fore-url n) {:as :json
                                         :throw-exceptions false})]
     (if (= (req :status) 200)
       ;; we don't need scores here and it's polluting debugging logs
       (dissoc (req :body) :scores))))
 
-(defn fore-prob [project prob-num]
+(defn fore-prob
+  "main function, used by leiningen"
+  [project prob-num]
   (if-let [prob (get-prob prob-num)]
     (try
       (let [title (prob :title)]
