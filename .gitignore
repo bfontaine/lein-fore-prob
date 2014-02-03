@@ -1,8 +1,11 @@
-pom.xml
-*jar
-/lib/
-/classes/
-.lein-failures
-.lein-deps-sum
 *~
 *#
+*.swp
+*.swo
+*.jar
+pom.xml
+/lib/
+/target
+/classes/
+/.lein-*
+/.nrepl-port
