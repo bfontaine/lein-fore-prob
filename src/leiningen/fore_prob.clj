@@ -23,7 +23,7 @@
   "format a problem description as Clojure comments with one level of
    indentation"
   [desc]
-  (str "  ;; " (cs/replace #"\r?\n" "\n  ;; ")))
+  (str "  ;; " (cs/replace desc #"\r?\n" "\n  ;; ")))
 
 (defn- add-stub [project prob]
   (let [src (io/file "src" (ns->path (project :group)) "core.clj")]
