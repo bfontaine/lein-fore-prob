@@ -1,7 +1,6 @@
 (ns leiningen.fore-prob
   "Populate the current project with a 4clojure problem."
   (:require [clj-http.client :as http]
-            [cheshire.core   :as json]
             [clojure.java.io :as io])
   (:use [clojure.string :as cs :exclude [replace reverse]]))
 
@@ -12,7 +11,7 @@
            (replace \. \/))))
 
 (defn- title->fn [title]
-  (.toLowerCase (cs/replace title #"[^\w]" "-")))
+  (.toLowerCase (cs/replace title #"\W" "-")))
 
 (defn- drop-replace-me [fn]
   (let [t (slurp fn)
@@ -34,11 +33,12 @@
 ;; Allow something that might have quotes to live in a string.
 (defn- enquote [s]
   (cs/replace s  "\"" "\\\""))
+
 ;; XXX - Format too?
 (defn- expand-prob [prob tests]
   (->>
    (map #(cs/replace % #"\b__\b" (str prob "-solution")) tests)
-   (map #(cs/replace % "\\r?\\n" "\n")) ; XXX \r isn't getting replaced.
+   (map #(cs/replace % #"\r?\n" "\n"))
    (map #(cs/join " " ["(is" % "\"" (enquote %) "\")"]))
    (cs/join "\n")))
 
@@ -57,17 +57,22 @@
 
 (def fore-url "http://4clojure.com/api/problem/")
 
-;; TODO - Create projects from a problem (maybe use the spawn plugin?).
+(defn get-prob [n]
+  (let [req (http/get (str fore-url n) {:as :json
+                                        :throw-exceptions false})]
+    (if (= (req :status) 200)
+      ;; we don't need scores here and it's polluting debugging logs
+      (dissoc (req :body) :scores))))
+
 (defn fore-prob [project prob-num]
-  (try
-    ;; TODO - Check HTTP status.
-    (let [json (json/parse-string
-                 (:body (http/get (str fore-url prob-num))))
-          title (json :title)]
-      (if-not (write-tests project json) ; spit returns nil by default hence
-                                         ; the inversion of logic.
-        (println (str "Problem \"" title "\" added!"))
-        (println (str "Problem \"" title "\" has already been added!"))))
-    (catch Exception e
-      (println (str "Failed setting problem " prob-num ": " (.getMessage e)))
-      (shutdown-agents))))
+  (if-let [prob (get-prob prob-num)]
+    (try
+      (let [title (prob :title)]
+        (if-not (write-tests project prob) ; spit returns nil by default hence
+                                           ; the inversion of logic.
+          (println (str "Problem \"" title "\" added!"))
+          (println (str "Problem \"" title "\" has already been added!"))))
+      (catch Exception e
+        (println (str "Failed setting problem " prob-num ": " (.getMessage e)))
+        (shutdown-agents)))
+    (println "Cannot get problem" prob-num "(HTTP status != 200).")))
