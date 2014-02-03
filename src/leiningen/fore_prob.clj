@@ -36,8 +36,8 @@
     (if-not (re-find (re-pattern (str "(?m)^\\(defn " prob)) (slurp src))
       (spit src
             (str "\n(defn " prob "-solution [] ; Update args as needed!\n"
-                 (-> project :description desc->comments)
-                 "nil)\n")
+                 (-> project :description desc->comments) "\n"
+                 "  nil)\n")
             :append true))))
 
 (defn- no-test-yet
