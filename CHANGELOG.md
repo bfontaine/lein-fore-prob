@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.4
+
+* Missing argument in an internal function fixed
+* Documentation added in the code
+
 ## 0.0.3
 
 * Using `tests/project_name/core_tests.clj` for tests instead of
