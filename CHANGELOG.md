@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.1.0
+## 0.0.2
+
+* Better error message for HTTP errors when retrieving a problem
+
+## 0.0.1
 
 First version, from [`lein-foreclojure-plugin`][lfp] code.
 
