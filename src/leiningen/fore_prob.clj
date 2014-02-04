@@ -1,16 +1,15 @@
 (ns leiningen.fore-prob
   "Populate the current project with a 4clojure problem."
   (:require [clj-http.client :as http]
-            [clojure.java.io :as io])
-  (:use [clojure.string :as cs :exclude [replace reverse]]))
+            [clojure.java.io :as io]
+            [clojure.string  :as cs]))
 
-;; Purloined from leiningen/src/leiningen/util/paths.clj
+;; Adapted from leiningen/src/leiningen/util/paths.clj
 (defn- ns->path
   "Convert a namespace into a path"
   [n]
-  (str (.. (str n)
-           (replace \- \_)
-           (replace \. \/))))
+  (apply str (replace {\- \_
+                       \. \/} n)))
 
 (defn- title->fn
   "Convert a problem title into a valid function name"
@@ -25,11 +24,19 @@
     (if (re-find r t)
       (spit fn (cs/replace t r "")))))
 
+(defn- indent
+  "Return a string representing the given level of indentation"
+  ([] (indent 1))
+  ([lvl]
+    (apply str (repeat lvl "  "))))
+
 (defn- desc->comments
   "format a problem description as Clojure comments with one level of
    indentation"
-  [desc]
-  (str "  ;; " (cs/replace desc #"\r?\n" "\n  ;; ")))
+  ([desc] (desc->comments desc 1))
+  ([desc i]
+    (str
+      (indent i) ";; " (cs/replace desc #"\r?\n" (str "\n" (indent i) ";; ")))))
 
 (defn- add-stub [project prob]
   (let [src (io/file "src" (ns->path (project :group)) "core.clj")]
@@ -37,7 +44,7 @@
       (spit src
             (str "\n(defn " prob "-solution [] ; Update args as needed!\n"
                  (-> project :description desc->comments) "\n"
-                 "  nil)\n")
+                 (indent) "nil)\n")
             :append true))))
 
 (defn- no-test-yet
@@ -57,7 +64,7 @@
   (->>
    (map #(cs/replace % #"\b__\b" (str prob "-solution")) tests)
    (map #(cs/replace % #"\r?\n" "\n"))
-   (map #(cs/join " " ["(is" % "\"" (enquote %) "\")"]))
+   (map #(cs/join " " [(str (indent) "(is") % "\"" (enquote %) "\")"]))
    (cs/join "\n")))
 
 (defn- write-tests
@@ -83,7 +90,7 @@
   (let [req (http/get (str fore-url n) {:as :json
                                         :throw-exceptions false})]
     (if (= (req :status) 200)
-      ;; we don't need scores here and it's polluting debugging logs
+      ;; we don't need scores here and it's polluting debug logs
       (dissoc (req :body) :scores))))
 
 (defn fore-prob
@@ -97,6 +104,5 @@
           (println (str "Problem \"" title "\" added!"))
           (println (str "Problem \"" title "\" has already been added!"))))
       (catch Exception e
-        (println (str "Failed setting problem " prob-num ": " (.getMessage e)))
-        (shutdown-agents)))
+        (println (str "Failed setting problem " prob-num ": " (.getMessage e)))))
     (println "Cannot get problem" prob-num "(HTTP status != 200).")))
