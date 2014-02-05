@@ -20,7 +20,7 @@ Add the plugin in your `~/.lein/profiles`:
 
 ```clj
 {:user {:plugins [ ; ... other plugins ...
-                  [lein-fore-prob "0.0.1"]]}}
+                  [lein-fore-prob "0.0.4"]]}}
 ```
 
 Create a project to store 4clojure problems:
