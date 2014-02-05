@@ -1,4 +1,4 @@
-# foreclojure-plugin
+# lein-fore-prob
 
 A leiningen plugin which given a problem from 4clojure will populate the
 current project's tests with the problem's tests. This is based on
