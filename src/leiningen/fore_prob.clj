@@ -14,7 +14,10 @@
 (defn- title->fn
   "Convert a problem title into a valid function name"
   [title]
-  (.toLowerCase (cs/replace title #"\W" "-")))
+  (.toLowerCase
+    (-> title
+      (cs/replace #"^\W+|\W+$" "") ; trim special chars
+      (cs/replace #"\W+" "-"))))
 
 (defn- drop-replace-me
   "Remove 'replace-me' tests from a file"
@@ -35,15 +38,18 @@
    indentation"
   ([desc] (desc->comments desc 1))
   ([desc i]
-    (str
-      (indent i) ";; " (cs/replace desc #"\r?\n" (str "\n" (indent i) ";; ")))))
+    (if (empty? desc)
+      ""
+      (str
+        (indent i) ";; "
+        (cs/replace desc #"\r?\n" (str "\n" (indent i) ";; ")) "\n"))))
 
 (defn- add-stub [project prob]
   (let [src (io/file "src" (ns->path (project :group)) "core.clj")]
     (if-not (re-find (re-pattern (str "(?m)^\\(defn " prob)) (slurp src))
       (spit src
             (str "\n(defn " prob "-solution [] ; Update args as needed!\n"
-                 (-> project :description desc->comments) "\n"
+                 (-> project :description desc->comments)
                  (indent) "nil)\n")
             :append true))))
 
@@ -62,8 +68,9 @@
   "expand a problem string"
   [prob tests]
   (->>
+   ;; TODO factorize this '-solution' appending in a function
    (map #(cs/replace % #"\b__\b" (str prob "-solution")) tests)
-   (map #(cs/replace % #"\r?\n" "\n"))
+   (map #(cs/replace % #"\r\n" "\n"))
    (map #(cs/join " " [(str (indent) "(is") % "\"" (enquote %) "\")"]))
    (cs/join "\n")))
 
