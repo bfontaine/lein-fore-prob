@@ -1,5 +1,7 @@
 # lein-fore-prob
 
+[![Build Status](https://travis-ci.org/bfontaine/lein-fore-prob.png?branch=master)](https://travis-ci.org/bfontaine/lein-fore-prob)
+
 A leiningen plugin which given a problem from 4clojure will populate the
 current project's tests with the problem's tests. This is based on
 [`lein-foreclojure-plugin`][lfp] code updated for Leiningen 2.
