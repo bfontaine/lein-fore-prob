@@ -73,9 +73,21 @@
   (testing "quotes"
     (is (= (#'fp/enquote "\"foo\"") "\\\"foo\\\""))))
 
+(def sample-prob1
+  {:title "Foo Bar"
+   :description "write a foo bar"
+   :difficulty "Medium"
+   :restricted []
+   :times-solved 42
+   :scores {}
+   :user "foo"
+   :tags ["bar"]
+   :tests ["(= (__ 42) 21)" "(= (__ 21) 42)"]})
+
 (deftest expand-prob) ; TODO
 
 ;; TODO we need to use sample and/or temporary files for these ones
+;; http://my.safaribooksonline.com/book/programming/clojure/9781449366384/4dot-local-io/_using_temporary_files_html
 
 (deftest drop-replace-me)
 (deftest add-stub)
@@ -83,9 +95,11 @@
 (deftest write-tests)
 
 ;; TODO we need to mock clj-http for this one
+;; https://github.com/myfreeweb/clj-http-fake
 
 (deftest get-prob)
 
 ;; TODO we need both requirements for this one
+;; or use with-redefs
 
 (deftest fore-prob)
