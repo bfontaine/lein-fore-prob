@@ -89,7 +89,7 @@
 (defn- has-problem-tests?
   "test if the current project has tests for a given problem"
   [tests problem]
-  (boolean (re-find (re-pattern (str "\\(" (prob->fn problem) "\\b")))))
+  (boolean (re-find (re-pattern (str "\\(" (prob->fn problem) "\\b")) tests)))
 
 (defn- has-problem-src?
   "test if the current project has the function for a given problem"
