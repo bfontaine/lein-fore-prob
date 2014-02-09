@@ -10,7 +10,7 @@ current project's tests with the problem's tests. This is based on
 
 The roadmap to 0.1.0 is:
 
-* fix TODO/FIXME/XXXs
+* fix TODO/FIXME/XXXs (done)
 * write tests
 
 A lot of breaking changes might happen before 0.1.0, so don’t rely on a
