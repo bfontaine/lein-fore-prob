@@ -57,15 +57,16 @@ A stub function will be added to `src/probs_from_4clj/core.clj` e.g for
 `test/probs_from_4clj/core_test.clj` the tests for that problem will be added
 e.g. again for [problem 98][98] the test would be `can-equivalence-classes`. At
 that point you can flesh out the function until the test passes then copy
-it over to http://4clojure.org when you’re happy with it.
+it over to [4clojure.org][4clj] when you’re happy with it.
 
 [98]: http://www.4clojure.com/problem/98 "98. Equivalence Classes"
+[4clj]: http://www.4clojure.com/
 
 ## License
 
 Copyright © 2014 Baptiste Fontaine
 
-Original code:
+**Original code:**
 
 Copyright © 2011 Dan Brook
 
