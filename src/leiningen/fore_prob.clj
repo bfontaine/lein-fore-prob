@@ -4,34 +4,37 @@
             [clojure.java.io :as io]
             [clojure.string  :as cs]))
 
-;; Adapted from leiningen/src/leiningen/util/paths.clj
-(defn- ns->path
-  "Convert a namespace into a path"
-  [n]
-  (apply str (replace {\- \_
-                       \. \/} n)))
-
-(defn- title->fn
-  "Convert a problem title into a valid function name"
-  [title]
-  (.toLowerCase
-    (-> title
-      (cs/replace #"^\W+|\W+$" "") ; trim special chars
-      (cs/replace #"\W+" "-"))))
-
-(defn- drop-replace-me
-  "Remove 'replace-me' tests from a file"
-  [fn]
-  (let [t (slurp fn)
-        r #"(?m)^\(deftest replace-me[^)]+\)+$"]
-    (if (re-find r t)
-      (spit fn (cs/replace t r "")))))
+;; == Formatting helpers ==
 
 (defn- indent
   "Return a string representing the given level of indentation"
   ([] (indent 1))
   ([lvl]
     (apply str (repeat lvl "  "))))
+
+(def ^{:private true} test-template
+  [ "(deftest can-" :prob-fn "\n"
+      :tests ")\n" ])
+
+(def ^{:private true} solution-template
+  [ "(defn " :prob-fn "-solution\n"
+    (indent) "[& args] ;; update args as needed\n"
+    :description
+    (indent) "nil)\n" ])
+
+(defn- mk-template
+  "return a string from a template and a map"
+  [tpl kv]
+  (apply str (map #(if (keyword? %) (kv %) %) tpl)))
+
+(defn- prob->fn
+  "Convert a problem into a valid function name"
+  [prob]
+  (.toLowerCase
+    (-> prob
+      :title
+      (cs/replace #"^\W+|\W+$" "") ; trim special chars
+      (cs/replace #"\W+" "-"))))
 
 (defn- desc->comments
   "format a problem description as Clojure comments with one level of
@@ -44,50 +47,89 @@
         (indent i) ";; "
         (cs/replace desc #"\r?\n" (str "\n" (indent i) ";; ")) "\n"))))
 
-(defn- add-stub [project prob]
-  (let [src (io/file "src" (ns->path (project :group)) "core.clj")]
-    (if-not (re-find (re-pattern (str "(?m)^\\(defn " prob)) (slurp src))
-      (spit src
-            (str "\n(defn " prob "-solution [] ; Update args as needed!\n"
-                 (-> project :description desc->comments)
-                 (indent) "nil)\n")
-            :append true))))
-
-(defn- no-test-yet
-  "test if there are any fore-prob tests yet"
-  [fn prob]
-  (nil? (re-find (re-pattern (str "(?m)^\\(deftest can-" prob)) (slurp fn))))
-
-(defn- enquote [s]
-  "Allow something that might have quotes to live in a string"
-  [s]
-  (cs/replace s  "\"" "\\\""))
-
-;; XXX - Format too?
-(defn- expand-prob
-  "expand a problem string"
+(defn- expand-prob-tests
+  "expand a problem’s tests string"
   [prob tests]
   (->>
-   ;; TODO factorize this '-solution' appending in a function
    (map #(cs/replace % #"\b__\b" (str prob "-solution")) tests)
    (map #(cs/replace % #"\r\n" "\n"))
-   (map #(cs/join " " [(str (indent) "(is") % "\"" (enquote %) "\")"]))
+   (map #(str (indent) "(is " % ")")) ; wrap tests in 'is calls
    (cs/join "\n")))
 
-(defn- write-tests
-  "write tests to the main tests file (core_test.clj)"
-  [project problem]
-  (let [prob      (title->fn (problem :title))
-        test-file (io/file
-                    "test" (ns->path (project :group)) "core_test.clj")]
-    (add-stub project prob)
-    (drop-replace-me test-file)    
-    (if (no-test-yet test-file prob)
-      (spit test-file
-            (str "\n(deftest can-" prob "\n"
-                 (expand-prob prob (problem :tests)) ")\n")
-            :append true)
-      true)))
+;; == Files handling ==
+
+(defn- project->path
+  "Convert a project's namespace into a path"
+  [project]
+  (apply str (replace {\- \_
+                       \. \/} (project :group))))
+
+(defn- tests-path
+  "return a File object for the main tests file of the current project"
+  [project]
+  ;; this is the default test file when using `lein new`
+  (io/file "test" (project->path project) "core_test.clj"))
+
+(defn- src-path
+  "return a File object for the main source file of the current project"
+  [project]
+  (io/file "src" (project->path project) "core.clj"))
+
+(defn- get-tests
+  "return the content of the main tests file of the current project, stripped
+   out of any 'replace-me' placeholder test"
+  [project]
+  (cs/replace (slurp (tests-path)) #"(?m)^\(deftest replace-me[^)]+\)+$" ""))
+
+(defn- get-src
+  "return the content of the main source file of the current project"
+  [project]
+  (slurp (src-path)))
+
+(defn- has-problem-tests?
+  "test if the current project has tests for a given problem"
+  [tests problem]
+  (boolean (re-find (re-pattern (str "\\(" (prob->fn problem) "\\b")))))
+
+(defn- has-problem-src?
+  "test if the current project has the function for a given problem"
+  [src problem]
+  (boolean (re-find (re-pattern (str "\\(defn " (prob->fn problem))) src)))
+
+(defn- write-problem-tests
+  "write tests for a given problem in the current project"
+  [project existing-tests prob]
+  (spit
+    (tests-path)
+    (str existing-tests
+         (mk-template
+           (cons "\n\n" test-template)
+           {:prob-fn prob
+            :tests (expand-prob-tests prob (prob :tests))}))))
+
+(defn- write-problem-src
+  "add a function for a given problem in the current project"
+  [project prob]
+  (spit (src-path)
+        (mk-template
+          (cons "\n\n" solution-template)
+          {:prob-fn prob
+           :description (-> project :description desc->comments)})
+        :append true))
+
+(defn- write-prob
+  "write a problem source and tests"
+  [project prob]
+  (let [tests (get-tests project)
+        src   (get-src   project)]
+    (if-not (has-problem-tests? tests prob)
+      (write-problem-tests project tests prob)
+      (println "tests already exist, skipping."))
+    (if-not (has-problem-src? src prob)
+      (write-problem-src project prob)
+      (println "source already exist, skipping."))))
+
+;; == 4clojure API interaction ==
 
 (def fore-url "http://4clojure.com/api/problem/")
 
@@ -100,16 +142,11 @@
       ;; we don't need scores here and it's polluting debug logs
       (dissoc (req :body) :scores))))
 
+;; == main function ==
+
 (defn fore-prob
   "main function, used by leiningen"
   [project prob-num]
   (if-let [prob (get-prob prob-num)]
-    (try
-      (let [title (prob :title)]
-        (if-not (write-tests project prob) ; spit returns nil by default hence
-                                           ; the inversion of logic.
-          (println (str "Problem \"" title "\" added!"))
-          (println (str "Problem \"" title "\" has already been added!"))))
-      (catch Exception e
-        (println (str "Failed setting problem " prob-num ": " (.getMessage e)))))
-    (println "Cannot get problem" prob-num "(HTTP status != 200).")))
+    (println "Problem" (str \" (prob :title) \") "added!")
+    (println (str "Cannot get problem " prob-num "."))))

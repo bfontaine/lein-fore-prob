@@ -2,39 +2,41 @@
   (:use clojure.test)
   (:require [leiningen.fore-prob :as fp]))
 
-(deftest ns->path
+(deftest project->path
   (testing "empty ns"
-    (is (= (#'fp/ns->path "") "")))
+    (is (= (#'fp/project->path {:group ""}) "")))
   (testing "no dots"
-    (is (= (#'fp/ns->path "foobar") "foobar")))
+    (is (= (#'fp/project->path {:group "foobar"}) "foobar")))
   (testing "ns without hyphens"
-    (is (= (#'fp/ns->path "foo.bar") "foo/bar")))
+    (is (= (#'fp/project->path {:group "foo.bar"}) "foo/bar")))
   (testing "ns with an hyphen"
-    (is (= (#'fp/ns->path "foo-bar.qux") "foo_bar/qux")))
+    (is (= (#'fp/project->path {:group "foo-bar.qux"}) "foo_bar/qux")))
   (testing "ns with multiple hyphens"
-    (is (= (#'fp/ns->path "foo-bar-qux.foo") "foo_bar_qux/foo")))
+    (is (= (#'fp/project->path {:group "foo-bar-qux.foo"}) "foo_bar_qux/foo")))
   (testing "ns with multiple hyphens & dots"
-    (is (= (#'fp/ns->path "a.foo-bar-qux.foo") "a/foo_bar_qux/foo"))))
+    (is (= (#'fp/project->path {:group "a.foo-bar-qux.foo"})
+           "a/foo_bar_qux/foo"))))
 
-(deftest title->fn
+(deftest prob->fn
   (testing "one word"
-    (is (= (#'fp/title->fn "foo") "foo")))
+    (is (= (#'fp/prob->fn {:title "foo"}) "foo")))
   (testing "two words"
-    (is (= (#'fp/title->fn "foo bar") "foo-bar")))
+    (is (= (#'fp/prob->fn {:title "foo bar"}) "foo-bar")))
   (testing "multiple words"
-    (is (= (#'fp/title->fn "foo bar qux") "foo-bar-qux")))
+    (is (= (#'fp/prob->fn {:title "foo bar qux"}) "foo-bar-qux")))
   (testing "capitalized word"
-    (is (= (#'fp/title->fn "Foo") "foo")))
+    (is (= (#'fp/prob->fn {:title "Foo"}) "foo")))
   (testing "mixed case words"
-    (is (= (#'fp/title->fn "FoO bAR QuX") "foo-bar-qux")))
+    (is (= (#'fp/prob->fn {:title "FoO bAR QuX"}) "foo-bar-qux")))
   (testing "special char"
-    (is (= (#'fp/title->fn "a*b") "a-b")))
+    (is (= (#'fp/prob->fn {:title "a*b"}) "a-b")))
   (testing "multiple special chars"
-    (is (= (#'fp/title->fn "a***b") "a-b")))
+    (is (= (#'fp/prob->fn {:title "a***b"}) "a-b")))
   (testing "ending with special chars"
-    (is (= (#'fp/title->fn "I got 99$:)") "i-got-99")))
+    (is (= (#'fp/prob->fn {:title "I got 99$:)"}) "i-got-99")))
   (testing "starting with special chars"
-    (is (= (#'fp/title->fn "$ is the dollar symbol") "is-the-dollar-symbol"))))
+    (is (= (#'fp/prob->fn {:title "$ is the dollar symbol"})
+           "is-the-dollar-symbol"))))
 
 (deftest indent
   (testing "no arg"
@@ -64,15 +66,6 @@
   (testing "UNIX line-ending only"
     (is (= (re-find #"\r\n" (#'fp/desc->comments "foo\r\nbar\nq\r\na")) nil))))
 
-(deftest enquote
-  (testing "empty string"
-    (is (= (#'fp/enquote "") "")))
-  (testing "no quotes"
-    (let [s "foo bar _qux $"]
-      (is (= (#'fp/enquote s) s))))
-  (testing "quotes"
-    (is (= (#'fp/enquote "\"foo\"") "\\\"foo\\\""))))
-
 (def sample-prob1
   {:title "Foo Bar"
    :description "write a foo bar"
@@ -84,22 +77,27 @@
    :tags ["bar"]
    :tests ["(= (__ 42) 21)" "(= (__ 21) 42)"]})
 
-(deftest expand-prob) ; TODO
+(deftest expand-prob-tests) ; TODO
+(deftest tests-path)
+(deftest src-path)
+(deftest has-problem-tests?)
+(deftest has-problem-src?)
 
 ;; TODO we need to use sample and/or temporary files for these ones
 ;; http://my.safaribooksonline.com/book/programming/clojure/9781449366384/4dot-local-io/_using_temporary_files_html
 
-(deftest drop-replace-me)
-(deftest add-stub)
-(deftest no-test-yet)
-(deftest write-tests)
+(deftest get-tests)
+(deftest get-src)
+
+(deftest write-problem-tests)
+(deftest write-problem-src)
 
 ;; TODO we need to mock clj-http for this one
 ;; https://github.com/myfreeweb/clj-http-fake
 
 (deftest get-prob)
 
-;; TODO we need both requirements for this one
-;; or use with-redefs
+;; TODO we need to use with-redefs for these ones
 
+(deftest write-prob)
 (deftest fore-prob)
