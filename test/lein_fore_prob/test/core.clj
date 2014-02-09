@@ -1,6 +1,7 @@
 (ns lein-fore-prob.test.core
   (:use clojure.test)
-  (:require [leiningen.fore-prob :as fp]))
+  (:require [leiningen.fore-prob :as fp])
+  (:import  [java.io File]))
 
 (deftest project->path
   (testing "empty ns"
@@ -66,6 +67,57 @@
   (testing "UNIX line-ending only"
     (is (= (re-find #"\r\n" (#'fp/desc->comments "foo\r\nbar\nq\r\na")) nil))))
 
+(def sep (File/separator))
+
+(def   src-dir "src")
+(def tests-dir "test")
+
+(def tests-file "core_test.clj")
+(def   src-file "core.clj")
+
+(defn mk-path
+  "tests helper: make a path from one or more string(s)"
+  [& parts]
+  (apply str (interpose sep parts)))
+
+(deftest tests-path
+  (testing "class"
+    (is (= (type (#'fp/tests-path {:group "foo"})) java.io.File)))
+  (testing "empty namespace"
+    (is (= (. (#'fp/tests-path {:group ""}) getPath)
+           (mk-path tests-dir tests-file))))
+  (testing "one-word namespace"
+    (is (= (. (#'fp/tests-path {:group "foo"}) getPath)
+           (mk-path tests-dir "foo" tests-file))))
+  (testing "namespace with dots"
+    (is (= (. (#'fp/tests-path {:group "foo.bar"}) getPath)
+           (mk-path tests-dir "foo" "bar" tests-file))))
+  (testing "dashed namespace"
+    (is (= (. (#'fp/tests-path {:group "foo-bar"}) getPath)
+           (mk-path tests-dir "foo_bar" tests-file))))
+  (testing "dashed namespace with dots"
+    (is (= (. (#'fp/tests-path {:group "foo-bar.qux"}) getPath)
+           (mk-path tests-dir "foo_bar" "qux" tests-file)))))
+
+(deftest src-path
+  (testing "class"
+    (is (= (type (#'fp/src-path {:group "foo"})) java.io.File)))
+  (testing "empty namespace"
+    (is (= (. (#'fp/src-path {:group ""}) getPath)
+           (mk-path src-dir src-file))))
+  (testing "one-word namespace"
+    (is (= (. (#'fp/src-path {:group "foo"}) getPath)
+           (mk-path src-dir "foo" src-file))))
+  (testing "namespace with dots"
+    (is (= (. (#'fp/src-path {:group "foo.bar"}) getPath)
+           (mk-path src-dir "foo" "bar" src-file))))
+  (testing "dashed namespace"
+    (is (= (. (#'fp/src-path {:group "foo-bar"}) getPath)
+           (mk-path src-dir "foo_bar" src-file))))
+  (testing "dashed namespace with dots"
+    (is (= (. (#'fp/src-path {:group "foo-bar.qux"}) getPath)
+           (mk-path src-dir "foo_bar" "qux" src-file)))))
+
 (def sample-prob1
   {:title "Foo Bar"
    :description "write a foo bar"
@@ -77,11 +129,10 @@
    :tags ["bar"]
    :tests ["(= (__ 42) 21)" "(= (__ 21) 42)"]})
 
-(deftest expand-prob-tests) ; TODO
-(deftest tests-path)
-(deftest src-path)
-(deftest has-problem-tests?)
-(deftest has-problem-src?)
+(deftest expand-prob-tests)  ; TODO
+
+(deftest has-problem-tests?) ; TODO
+(deftest has-problem-src?)   ; TODO
 
 ;; TODO we need to use sample and/or temporary files for these ones
 ;; http://my.safaribooksonline.com/book/programming/clojure/9781449366384/4dot-local-io/_using_temporary_files_html
