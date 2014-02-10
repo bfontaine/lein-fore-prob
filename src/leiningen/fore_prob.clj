@@ -134,7 +134,7 @@
       (println "tests already exist, skipping."))
     (if-not (has-problem-src? src probfn)
       (write-problem-src project prob)
-      (println "source already exist, skipping."))))
+      (println "source already exists, skipping."))))
 
 ;; == 4clojure API interaction ==
 
@@ -161,5 +161,10 @@
   "main function, used by leiningen"
   [project prob-num]
   (if-let [prob (get-prob prob-num)]
-    (println "Problem" (str \" (prob :title) \") "added!")
+    (try
+      (write-prob project prob)
+      (println "Problem" (str \" (prob :title) \") "added!")
+      (catch Exception e
+        (println "An error occured when writing the problem."
+                 (. e getMessage))))
     (println (str "Cannot get problem " prob-num "."))))
