@@ -49,12 +49,14 @@
 
 (defn- expand-prob-tests
   "expand a problem’s tests string"
-  [prob tests]
-  (->>
-   (map #(cs/replace % #"\b__\b" (str prob "-solution")) tests)
-   (map #(cs/replace % #"\r\n" "\n"))
-   (map #(str (indent) "(is " % ")")) ; wrap tests in 'is calls
-   (cs/join "\n")))
+  [prob]
+  (let [prob-fn (str (prob->fn prob) "-solution")]
+    (->>
+      (prob :tests)
+      (map #(cs/replace % #"\b__\b" prob-fn))
+      (map #(cs/replace % #"\r\n" "\n"))
+      (map #(str (indent) "(is " % ")")) ; wrap tests in 'is calls
+      (cs/join "\n"))))
 
 ;; == Files handling ==
 
@@ -79,38 +81,39 @@
   "return the content of the main tests file of the current project, stripped
    out of any 'replace-me' placeholder test"
   [project]
-  (cs/replace (slurp (tests-path)) #"(?m)^\(deftest replace-me[^)]+\)+$" ""))
+  (cs/replace
+    (slurp (tests-path project))
+    #"(?m)^\(deftest replace-me[^)]+\)+$" ""))
 
 (defn- get-src
   "return the content of the main source file of the current project"
   [project]
-  (slurp (src-path)))
+  (slurp (src-path project)))
 
 (defn- has-problem-tests?
   "test if the current project has tests for a given problem"
-  [tests problem]
-  (boolean (re-find (re-pattern (str "\\(" (prob->fn problem) "\\b")) tests)))
+  [tests probfn]
+  (boolean (re-find (re-pattern (str "\\(" probfn "\\b")) tests)))
 
 (defn- has-problem-src?
-  "test if the current project has the function for a given problem"
-  [src problem]
-  (boolean (re-find (re-pattern (str "\\(defn " (prob->fn problem))) src)))
+  "test if the current project has a given function"
+  [src probfn]
+  (boolean (re-find (re-pattern (str "\\(defn " probfn "\\b")) src)))
 
 (defn- write-problem-tests
   "write tests for a given problem in the current project"
   [project existing-tests prob]
-  (spit
-    (tests-path)
-    (str existing-tests
-         (mk-template
-           (cons "\n\n" test-template)
-           {:prob-fn prob
-            :tests (expand-prob-tests prob (prob :tests))}))))
+  (spit (tests-path project)
+        (str existing-tests
+             (mk-template
+               (cons "\n\n" test-template)
+               {:prob-fn prob
+                :tests (expand-prob-tests prob)}))))
 
 (defn- write-problem-src
   "add a function for a given problem in the current project"
   [project prob]
-  (spit (src-path)
+  (spit (src-path project)
         (mk-template
           (cons "\n\n" solution-template)
           {:prob-fn prob
@@ -120,12 +123,13 @@
 (defn- write-prob
   "write a problem source and tests"
   [project prob]
-  (let [tests (get-tests project)
-        src   (get-src   project)]
-    (if-not (has-problem-tests? tests prob)
+  (let [tests  (get-tests project)
+        src    (get-src   project)
+        probfn (prob->fn prob)]
+    (if-not (has-problem-tests? tests probfn)
       (write-problem-tests project tests prob)
       (println "tests already exist, skipping."))
-    (if-not (has-problem-src? src prob)
+    (if-not (has-problem-src? src probfn)
       (write-problem-src project prob)
       (println "source already exist, skipping."))))
 
