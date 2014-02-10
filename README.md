@@ -8,16 +8,13 @@ current project's tests with the problem's tests. This is based on
 
 [lfp]: https://github.com/broquaint/lein-foreclojure-plugin
 
-A lot of breaking changes might happen before 0.1.0, so don’t rely on a
-specific version until this one.
-
 ## Usage
 
 Add the plugin in your `~/.lein/profiles`:
 
 ```clj
 {:user {:plugins [ ; ... other plugins ...
-                  [lein-fore-prob "0.0.4"]]}}
+                  [lein-fore-prob "0.1.0"]]}}
 ```
 
 Create a project to store 4clojure problems:

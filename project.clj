@@ -1,4 +1,4 @@
-(defproject lein-fore-prob "0.0.4"
+(defproject lein-fore-prob "0.1.0"
   :description "A leiningen plugin to populate a project from a 4clojure problem."
   :url "https://github.com/bfontaine/lein-fore-prob"
   :license {:name "Eclipse Public License"
