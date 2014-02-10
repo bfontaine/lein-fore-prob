@@ -110,17 +110,17 @@
         (str existing-tests
              (mk-template
                (cons "\n\n" test-template)
-               {:prob-fn prob
+               {:prob-fn (prob->fn prob)
                 :tests (expand-prob-tests prob)}))))
 
 (defn- write-problem-src
-  "add a function for a given problem in the current project"
+  "add a given problem function in the current project"
   [project prob]
   (spit (src-path project)
         (mk-template
           (cons "\n\n" solution-template)
-          {:prob-fn prob
-           :description (-> project :description desc->comments)})
+          {:prob-fn (prob->fn prob)
+           :description (-> prob :description desc->comments)})
         :append true))
 
 (defn- write-prob
