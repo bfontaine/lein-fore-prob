@@ -271,10 +271,27 @@
   (is (= (with-redefs [slurp (constantly "xY3")] (#'fp/get-src {:title "yo"})))
       "xY3"))
 
-;; TODO
+(deftest write-problem-tests
+  (with-redefs [spit (fn [f code & _]
+                       (is (= "test/foo/core_test.clj" (. f getPath)))
+                       (is (= (str "\n\n"
+                                   "(deftest can-foo-bar\n"
+                                   "  (is (= (foo-bar-solution 42) 21))\n"
+                                   "  (is (= (foo-bar-solution 21) 42)))\n")
+                              code)))]
+    (#'fp/write-problem-tests {:group "foo"} "" prob1)))
 
-(deftest write-problem-tests)
-(deftest write-problem-src)
+(deftest write-problem-src
+  (with-redefs [spit (fn [f code & _]
+                       (is (= "src/foo/core.clj" (. f getPath)))
+                       (is (= (str "\n\n"
+                                   "(defn foo-bar-solution\n"
+                                   "  [& args] ;; update args as needed\n"
+                                   "  ;; write a foo bar\n"
+                                   "  nil)\n")
+                              code)))]
+    (#'fp/write-problem-src {:group "foo"} prob1)))
 
 (deftest write-prob)
+
 (deftest fore-prob)
