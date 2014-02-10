@@ -81,9 +81,12 @@
   "return the content of the main tests file of the current project, stripped
    out of any 'replace-me' placeholder test"
   [project]
-  (cs/replace
+  (->
     (slurp (tests-path project))
-    #"(?m)^\(deftest replace-me[^)]+\)+$" ""))
+    ;; lein1
+    (cs/replace #"(?m)^\(deftest replace-me[^)]+\)+$" "")
+    ;; lein2
+    (cs/replace #"(?m)^\(deftest a-test\s+\(testing \"FIXME[^)]+\)+$" "")))
 
 (defn- get-src
   "return the content of the main source file of the current project"
@@ -137,11 +140,17 @@
 
 (def fore-url "http://4clojure.com/api/problem/")
 
-(defn get-prob
-  "Return a problem map from its number using 4clojure API"
+(defn- prob-url
+  "return an API URL for a problem number. This doesn’t check that the URL is
+   valid"
   [n]
-  (let [req (http/get (str fore-url n) {:as :json
-                                        :throw-exceptions false})]
+  (str fore-url n))
+
+(defn- get-prob
+  "return a problem map from its number using 4clojure API"
+  [n]
+  (let [req (http/get (prob-url n) {:as :json
+                                    :throw-exceptions false})]
     (if (= (req :status) 200)
       ;; we don't need scores here and it's polluting debug logs
       (dissoc (req :body) :scores))))
