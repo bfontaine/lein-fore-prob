@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 (upcoming)
+
+* HTML code is now stripped from problems’ descriptions
+
+## 0.1.0
+
+* A large part of the code has been rewritten, making it more efficient
+* Tests added, full code coverage
+
 ## 0.0.4
 
 * Missing argument in an internal function fixed
