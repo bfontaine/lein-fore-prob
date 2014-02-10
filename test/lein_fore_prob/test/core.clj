@@ -2,8 +2,62 @@
   (:use clojure.test
         clj-http.fake)
   (:require [leiningen.fore-prob :as fp]
-            [cheshire.core       :as json])
+            [cheshire.core       :as json]
+            [clojure.string      :as cs])
   (:import  [java.io File]))
+
+;; samples & helpers
+
+(def prob1
+  {:title "Foo Bar"
+   :description "write a foo bar"
+   :difficulty "Medium"
+   :restricted []
+   :times-solved 42
+   :scores {}
+   :user "foo"
+   :tags ["bar"]
+   :tests ["(= (__ 42) 21)" "(= (__ 21) 42)"]})
+
+(def project-foo {:group "foo"})
+
+(def sep (File/separator))
+
+(def   src-dir "src")
+(def tests-dir "test")
+
+(def tests-file "core_test.clj")
+(def   src-file "core.clj")
+
+(defn mk-path
+  "tests helper: make a path from one or more string(s)"
+  [& parts]
+  (apply str (interpose sep parts)))
+
+(def ^{:doc "test helper: create an url for a problem number"} mk-url
+  #'fp/prob-url)
+
+(def fake-routes
+  {(mk-url 1) (fn [r] {:status 404 :headers {} :body ""})
+   (mk-url 2) (fn [r] {:status 500 :headers {} :body ""})
+   (mk-url 3) (fn [r] {:status 200 :headers {}
+                       :body (json/generate-string
+                               {:restricted []
+                                :title "Foo Bar"
+                                :times-solved 42
+                                :difficulty "Elementary"
+                                :scores {"45" 42}
+                                :tests ["(= __ true)"]
+                                :user "someone"
+                                :description "This is a problem"
+                                :tags []})})})
+
+(defn assert-println
+  "test helper: return a test to replace 'println' and check that a specific
+   string is \"printed\""
+  [s]
+  (fn [& ss]
+    (is (= (cs/join " " ss) s))))
 
 (deftest project->path
   (testing "empty ns"
@@ -69,22 +123,9 @@
   (testing "UNIX line-ending only"
     (is (= (re-find #"\r\n" (#'fp/desc->comments "foo\r\nbar\nq\r\na")) nil))))
 
-(def sep (File/separator))
-
-(def   src-dir "src")
-(def tests-dir "test")
-
-(def tests-file "core_test.clj")
-(def   src-file "core.clj")
-
-(defn mk-path
-  "tests helper: make a path from one or more string(s)"
-  [& parts]
-  (apply str (interpose sep parts)))
-
 (deftest tests-path
   (testing "class"
-    (is (= (type (#'fp/tests-path {:group "foo"})) java.io.File)))
+    (is (= (type (#'fp/tests-path project-foo)) java.io.File)))
   (testing "empty namespace"
     (is (= (. (#'fp/tests-path {:group ""}) getPath)
            (mk-path tests-dir tests-file))))
@@ -103,7 +144,7 @@
 
 (deftest src-path
   (testing "class"
-    (is (= (type (#'fp/src-path {:group "foo"})) java.io.File)))
+    (is (= (type (#'fp/src-path project-foo)) java.io.File)))
   (testing "empty namespace"
     (is (= (. (#'fp/src-path {:group ""}) getPath)
            (mk-path src-dir src-file))))
@@ -119,17 +160,6 @@
   (testing "dashed namespace with dots"
     (is (= (. (#'fp/src-path {:group "foo-bar.qux"}) getPath)
            (mk-path src-dir "foo_bar" "qux" src-file)))))
-
-(def prob1
-  {:title "Foo Bar"
-   :description "write a foo bar"
-   :difficulty "Medium"
-   :restricted []
-   :times-solved 42
-   :scores {}
-   :user "foo"
-   :tags ["bar"]
-   :tests ["(= (__ 42) 21)" "(= (__ 21) 42)"]})
 
 (deftest expand-prob-tests
   (testing "no tests"
@@ -221,24 +251,6 @@
     (is (= (#'fp/prob-url 42) "http://4clojure.com/api/problem/42"))
     (is (= (#'fp/prob-url 133) "http://4clojure.com/api/problem/133"))))
 
-(def ^{:doc "test helper: create an url for a problem number"} mk-url
-  #'fp/prob-url)
-
-(def fake-routes
-  {(mk-url 1) (fn [r] {:status 404 :headers {} :body ""})
-   (mk-url 2) (fn [r] {:status 500 :headers {} :body ""})
-   (mk-url 3) (fn [r] {:status 200 :headers {}
-                       :body (json/generate-string
-                               {:restricted []
-                                :title "Foo Bar"
-                                :times-solved 42
-                                :difficulty "Elementary"
-                                :scores {"45" 42}
-                                :tests ["(= __ true)"]
-                                :user "someone"
-                                :description "This is a problem"
-                                :tags []})})})
-
 (deftest get-prob
   (with-fake-routes-in-isolation fake-routes
     (testing "404 error"
@@ -279,7 +291,7 @@
                                    "  (is (= (foo-bar-solution 42) 21))\n"
                                    "  (is (= (foo-bar-solution 21) 42)))\n")
                               code)))]
-    (#'fp/write-problem-tests {:group "foo"} "" prob1)))
+    (#'fp/write-problem-tests project-foo "" prob1)))
 
 (deftest write-problem-src
   (with-redefs [spit (fn [f code & _]
@@ -290,8 +302,82 @@
                                    "  ;; write a foo bar\n"
                                    "  nil)\n")
                               code)))]
-    (#'fp/write-problem-src {:group "foo"} prob1)))
+    (#'fp/write-problem-src project-foo prob1)))
 
-(deftest write-prob)
+(deftest write-prob
+  ;; TODO factorize duplicate code here, but it seems that nested
+  ;; with-redefs-fn don’t work
+  (testing "doesn’t write tests if they are already present"
+    (with-redefs-fn {#'fp/get-tests (constantly "")
+                     #'fp/get-src (constantly "")
+                     #'fp/has-problem-tests? (constantly true)
+                     #'fp/has-problem-src? (constantly false)
+                     #'fp/write-problem-tests (fn [& _]
+                                                (is (= true false)
+                                                    "should not write tests"))
+                     #'fp/write-problem-src (constantly nil)
+                     #'println (fn [s]
+                                 (is (= s "tests already exist, skipping.")))}
+      #(#'fp/write-prob project-foo prob1)))
+  (testing "doesn’t write source function if it’s already present"
+    (with-redefs-fn {#'fp/get-tests (constantly "")
+                     #'fp/get-src (constantly "")
+                     #'fp/has-problem-tests? (constantly false)
+                     #'fp/has-problem-src? (constantly true)
+                     #'fp/write-problem-src (fn [& _]
+                                              (is (= true false)
+                                                  "should not write in src"))
+                     #'fp/write-problem-tests (constantly nil)
+                     #'println (fn [s]
+                                 (is (= s "source already exists, skipping.")))}
+      #(#'fp/write-prob project-foo prob1)))
+  (testing "doesn’t write source and tests if they’re already present"
+    (with-redefs-fn {#'fp/get-tests (constantly "")
+                     #'fp/get-src (constantly "")
+                     #'fp/has-problem-tests? (constantly true)
+                     #'fp/has-problem-src? (constantly true)
+                     #'fp/write-problem-src (fn [& _]
+                                              (is (= true false)
+                                                  "should not write in src"))
+                     #'fp/write-problem-tests (fn [& _]
+                                              (is (= true false)
+                                                  "should not write tests"))
+                     #'println (constantly nil)}
+      #(#'fp/write-prob project-foo prob1)))
+  (testing "write both source and tests if they’re not already present"
+    (let [write-tests-called? (atom false)
+          write-src-called? (atom false)]
+      (with-redefs-fn {#'fp/get-tests (constantly "")
+                       #'fp/get-src (constantly "")
+                       #'fp/has-problem-tests? (constantly false)
+                       #'fp/has-problem-src? (constantly false)
+                       #'fp/write-problem-src (fn [& _] (swap! write-src-called? not))
+                       #'fp/write-problem-tests (fn [& _] (swap! write-tests-called? not))
+                       #'println (constantly nil)}
+        (fn []
+          (#'fp/write-prob project-foo prob1)
+          (is (= @write-tests-called? true))
+          (is (= @write-src-called? true)))))))
 
-(deftest fore-prob)
+(deftest fore-prob
+  (testing "cannot get problem"
+    (with-redefs-fn {#'fp/get-prob (constantly nil)
+                     #'println (assert-println "Cannot get problem 33.")}
+      (fn []
+        (#'fp/fore-prob project-foo 33))))
+  (testing "got an exception while writing problem"
+    (with-redefs-fn {#'fp/get-prob (constantly prob1)
+                     #'fp/write-prob (fn [& _ ] (throw (Exception. "foo")))
+                     #'println (assert-println (str "An error occured when"
+                                                    " writing the problem."
+                                                    " foo"))}
+      (fn []
+        (#'fp/fore-prob project-foo 42))))
+  (testing "writing problem"
+    (let [written (atom true)]
+      (with-redefs-fn {#'fp/get-prob (constantly prob1)
+                       #'fp/write-prob (fn [& _ ] (swap! written not))
+                       #'println (assert-println (str "Problem \"Foo Bar\""
+                                                      " added!"))}
+        (fn []
+          (#'fp/fore-prob project-foo 42))))))
