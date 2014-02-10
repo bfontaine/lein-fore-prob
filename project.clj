@@ -3,5 +3,7 @@
   :url "https://github.com/bfontaine/lein-fore-prob"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[clj-http "0.7.8"]]
+  :dependencies [[clj-http      "0.7.8"]
+                 [clj-http-fake "0.7.8"]
+                 [cheshire      "5.3.1"]]
   :eval-in-leiningen true)
