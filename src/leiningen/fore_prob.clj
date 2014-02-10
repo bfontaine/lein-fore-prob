@@ -2,7 +2,8 @@
   "Populate the current project with a 4clojure problem."
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
-            [clojure.string  :as cs]))
+            [clojure.string  :as cs]
+            [jsoup.soup      :as soup]))
 
 ;; == Formatting helpers ==
 
@@ -36,6 +37,21 @@
       (cs/replace #"^\W+|\W+$" "") ; trim special chars
       (cs/replace #"\W+" "-"))))
 
+(defn- strip-html
+  "strip HTML tags from a string"
+  [html]
+  (->
+    html
+    ;; Jsoup doesn’t preserve newlines, we’re using a little trick inspired
+    ;; of http://stackoverflow.com/a/6031463/735926 -- we replace newlines with
+    ;; a special word, strip HTML then replace each special word back to a
+    ;; newline.
+    (cs/replace #"(?i)(?:<br[^>]*>|\r?\n)\s*" "xZ%q9a")
+    (soup/parse)
+    .text
+    (cs/replace #"xZ%q9a" "\n")))
+
+
 (defn- desc->comments
   "format a problem description as Clojure comments with one level of
    indentation"
@@ -43,9 +59,11 @@
   ([desc i]
     (if (empty? desc)
       ""
-      (str
-        (indent i) ";; "
-        (cs/replace desc #"\r?\n" (str "\n" (indent i) ";; ")) "\n"))))
+      (->
+        desc
+        (strip-html)
+        (cs/replace #"\r?\n" (str "\n" (indent i) ";; "))
+        (#(str (indent i) ";; " % "\n"))))))
 
 (defn- expand-prob-tests
   "expand a problem’s tests string"

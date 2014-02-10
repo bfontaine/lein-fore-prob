@@ -121,7 +121,13 @@
   (testing "multiple lines with and indentation=2"
     (is (= (#'fp/desc->comments "foo\nbar" 2) "    ;; foo\n    ;; bar\n")))
   (testing "UNIX line-ending only"
-    (is (= (re-find #"\r\n" (#'fp/desc->comments "foo\r\nbar\nq\r\na")) nil))))
+    (is (= (re-find #"\r\n" (#'fp/desc->comments "foo\r\nbar\nq\r\na")) nil)))
+  (testing "stripping HTML (#1)"
+    (is (= (#'fp/desc->comments "foo <a href=\"/qux\">bar</a>")
+           "  ;; foo bar\n"))
+  (testing "stripping HTML while preserving newlines (#1)"
+    (is (= (#'fp/desc->comments "foo\n <a href=\"/qux\">bar</a><br />qux")
+           "  ;; foo\n  ;; bar\n  ;; qux\n")))))
 
 (deftest tests-path
   (testing "class"
