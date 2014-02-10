@@ -1,6 +1,8 @@
 (ns lein-fore-prob.test.core
-  (:use clojure.test)
-  (:require [leiningen.fore-prob :as fp])
+  (:use clojure.test
+        clj-http.fake)
+  (:require [leiningen.fore-prob :as fp]
+            [cheshire.core       :as json])
   (:import  [java.io File]))
 
 (deftest project->path
@@ -209,21 +211,70 @@
   (testing "found as a function name"
     (is (= (#'fp/has-problem-src? "(defn foo [] 2)" "foo") true))))
 
-;; TODO we need to use sample and/or temporary files for these ones
-;; http://my.safaribooksonline.com/book/programming/clojure/9781449366384/4dot-local-io/_using_temporary_files_html
+(deftest prob-url
+  (testing "zero"
+    (is (= (#'fp/prob-url 0) "http://4clojure.com/api/problem/0")))
+  (testing "negative number"
+    (is (= (#'fp/prob-url -5) "http://4clojure.com/api/problem/-5")))
+  (testing "positive number"
+    (is (= (#'fp/prob-url 1) "http://4clojure.com/api/problem/1"))
+    (is (= (#'fp/prob-url 42) "http://4clojure.com/api/problem/42"))
+    (is (= (#'fp/prob-url 133) "http://4clojure.com/api/problem/133"))))
 
-(deftest get-tests)
-(deftest get-src)
+(def ^{:doc "test helper: create an url for a problem number"} mk-url
+  #'fp/prob-url)
+
+(def fake-routes
+  {(mk-url 1) (fn [r] {:status 404 :headers {} :body ""})
+   (mk-url 2) (fn [r] {:status 500 :headers {} :body ""})
+   (mk-url 3) (fn [r] {:status 200 :headers {}
+                       :body (json/generate-string
+                               {:restricted []
+                                :title "Foo Bar"
+                                :times-solved 42
+                                :difficulty "Elementary"
+                                :scores {"45" 42}
+                                :tests ["(= __ true)"]
+                                :user "someone"
+                                :description "This is a problem"
+                                :tags []})})})
+
+(deftest get-prob
+  (with-fake-routes-in-isolation fake-routes
+    (testing "404 error"
+      (is (nil? (#'fp/get-prob 1))))
+    (testing "500 error"
+      (is (nil? (#'fp/get-prob 2))))
+    (testing "success"
+      (is (= (:title (#'fp/get-prob 3)) "Foo Bar")))))
+
+(deftest get-tests
+  (testing "empty file"
+    (is (= (with-redefs [slurp (constantly "")] (#'fp/get-tests {:title "yo"}))
+           "")))
+  (testing "no test placeholder"
+    (let [content "(a :fun :call) (deftest \"foo\" (is :a :test))"]
+      (is (= (with-redefs [slurp (constantly content)]
+               (#'fp/get-tests {:title "yo"}))
+             content))))
+  (testing "test placeholder"
+    (let [content (str "(deftest a-test\n"               ; default lein2
+                       "  (testing \"FIXME, I fail.\"\n" ; test placeholder
+                       "    (is (= 0 1))))")]
+      (is (= (with-redefs [slurp (constantly content)]
+             ""))))))
+
+(deftest get-src
+  (testing "empty file"
+    (is (= (with-redefs [slurp (constantly "")] (#'fp/get-src {:title "yo"})))
+        ""))
+  (is (= (with-redefs [slurp (constantly "xY3")] (#'fp/get-src {:title "yo"})))
+      "xY3"))
+
+;; TODO
 
 (deftest write-problem-tests)
 (deftest write-problem-src)
-
-;; TODO we need to mock clj-http for this one
-;; https://github.com/myfreeweb/clj-http-fake
-
-(deftest get-prob)
-
-;; TODO we need to use with-redefs for these ones
 
 (deftest write-prob)
 (deftest fore-prob)
