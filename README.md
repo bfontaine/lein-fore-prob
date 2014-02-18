@@ -11,7 +11,7 @@ current project's tests with the problem's tests. This is based on
 
 ## Usage
 
-Add the plugin in your `~/.lein/profiles`:
+Add the plugin in your `~/.lein/profiles.clj`:
 
 ```clj
 {:user {:plugins [ ; ... other plugins ...
