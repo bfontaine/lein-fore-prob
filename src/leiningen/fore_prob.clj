@@ -40,16 +40,17 @@
 (defn- strip-html
   "strip HTML tags from a string"
   [html]
-  (->
-    html
-    ;; Jsoup doesn’t preserve newlines, we’re using a little trick inspired
-    ;; of http://stackoverflow.com/a/6031463/735926 -- we replace newlines with
-    ;; a special word, strip HTML then replace each special word back to a
-    ;; newline.
-    (cs/replace #"(?i)(?:<br[^>]*>|\r?\n)\s*" "xZ%q9a")
-    (soup/parse)
-    .text
-    (cs/replace #"xZ%q9a" "\n")))
+  ;; Jsoup doesn’t preserve newlines, we’re using a little trick inspired
+  ;; of http://stackoverflow.com/a/6031463/735926 -- we replace newlines with
+  ;; a special word, strip HTML then replace each special word back to a
+  ;; newline.
+  (let [special-word "xZ%q9a"]
+    (->
+      html
+      (cs/replace #"(?i)(?:<br[^>]*>|\r?\n)\s*" special-word)
+      (soup/parse)
+      .text
+      (cs/replace (re-pattern special-word) "\n"))))
 
 
 (defn- desc->comments
