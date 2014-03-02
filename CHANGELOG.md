@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.1.1 (upcoming)
+## 0.1.1
 
 * HTML code is now stripped from problems’ descriptions
+* Multiple problems can be fetched at once, like in `lein fore-prob 1 2 3`
 
 ## 0.1.0
 
