@@ -165,7 +165,7 @@
   [n]
   (str fore-url n))
 
-(defn- get-prob
+(defn- fetch-prob-data
   "return a problem map from its number using 4clojure API"
   [n]
   (let [req (http/get (prob-url n) {:as :json
@@ -174,12 +174,10 @@
       ;; we don't need scores here and it's polluting debug logs
       (dissoc (req :body) :scores))))
 
-;; == main function ==
-
-(defn fore-prob
-  "main function, used by leiningen"
+(defn- add-prob
+  "add a problem to the current project from its number"
   [project prob-num]
-  (if-let [prob (get-prob prob-num)]
+  (if-let [prob (fetch-prob-data prob-num)]
     (try
       (write-prob project prob)
       (println "Problem" (str \" (prob :title) \") "added!")
@@ -187,3 +185,10 @@
         (println "An error occured when writing the problem."
                  (. e getMessage))))
     (println (str "Cannot get problem " prob-num "."))))
+
+;; == main function ==
+
+(defn fore-prob
+  "main function, used by leiningen"
+  [project & prob-nums]
+  (map (partial add-prob project) prob-nums))
