@@ -257,14 +257,14 @@
     (is (= (#'fp/prob-url 42) "http://4clojure.com/api/problem/42"))
     (is (= (#'fp/prob-url 133) "http://4clojure.com/api/problem/133"))))
 
-(deftest get-prob
+(deftest fetch-prob-data
   (with-fake-routes-in-isolation fake-routes
     (testing "404 error"
-      (is (nil? (#'fp/get-prob 1))))
+      (is (nil? (#'fp/fetch-prob-data 1))))
     (testing "500 error"
-      (is (nil? (#'fp/get-prob 2))))
+      (is (nil? (#'fp/fetch-prob-data 2))))
     (testing "success"
-      (is (= (:title (#'fp/get-prob 3)) "Foo Bar")))))
+      (is (= (:title (#'fp/fetch-prob-data 3)) "Foo Bar")))))
 
 (deftest get-tests
   (testing "empty file"
@@ -365,25 +365,25 @@
           (is (= @write-tests-called? true))
           (is (= @write-src-called? true)))))))
 
-(deftest fore-prob
+(deftest add-prob
   (testing "cannot get problem"
-    (with-redefs-fn {#'fp/get-prob (constantly nil)
+    (with-redefs-fn {#'fp/fetch-prob-data (constantly nil)
                      #'println (assert-println "Cannot get problem 33.")}
       (fn []
-        (#'fp/fore-prob project-foo 33))))
+        (#'fp/add-prob project-foo 33))))
   (testing "got an exception while writing problem"
-    (with-redefs-fn {#'fp/get-prob (constantly prob1)
+    (with-redefs-fn {#'fp/fetch-prob-data (constantly prob1)
                      #'fp/write-prob (fn [& _ ] (throw (Exception. "foo")))
                      #'println (assert-println (str "An error occured when"
                                                     " writing the problem."
                                                     " foo"))}
       (fn []
-        (#'fp/fore-prob project-foo 42))))
+        (#'fp/add-prob project-foo 42))))
   (testing "writing problem"
     (let [written (atom true)]
-      (with-redefs-fn {#'fp/get-prob (constantly prob1)
+      (with-redefs-fn {#'fp/fetch-prob-data (constantly prob1)
                        #'fp/write-prob (fn [& _ ] (swap! written not))
                        #'println (assert-println (str "Problem \"Foo Bar\""
                                                       " added!"))}
         (fn []
-          (#'fp/fore-prob project-foo 42))))))
+          (#'fp/add-prob project-foo 42))))))
