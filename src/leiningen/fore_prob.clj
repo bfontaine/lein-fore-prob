@@ -191,4 +191,5 @@
 (defn fore-prob
   "main function, used by leiningen"
   [project & prob-nums]
-  (map (partial add-prob project) prob-nums))
+  (doall
+    (map (partial add-prob project) prob-nums)))

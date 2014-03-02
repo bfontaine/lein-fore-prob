@@ -379,11 +379,36 @@
                                                     " foo"))}
       (fn []
         (#'fp/add-prob project-foo 42))))
+
   (testing "writing problem"
-    (let [written (atom true)]
+    (let [written (atom false)]
       (with-redefs-fn {#'fp/fetch-prob-data (constantly prob1)
                        #'fp/write-prob (fn [& _ ] (swap! written not))
                        #'println (assert-println (str "Problem \"Foo Bar\""
                                                       " added!"))}
         (fn []
-          (#'fp/add-prob project-foo 42))))))
+          (#'fp/add-prob project-foo 42)
+          (is (= @written true)))))))
+
+(deftest fore-prob
+  (testing "one prob"
+    (let [added (atom false)
+          proj  {:foo :bar}
+          n     "42"]
+      (with-redefs-fn {#'fp/add-prob (fn [prj prob-num]
+                                       (is (= prj proj))
+                                       (is (= prob-num n))
+                                       (swap! added not))}
+        (fn []
+          (fp/fore-prob proj n)
+          (is (= @added true))))))
+
+  (testing "multiple probs"
+    (let [cnt (atom 0)
+          proj  {:foo :bar}]
+      (with-redefs-fn {#'fp/add-prob (fn [prj _]
+                                       (is (= prj proj))
+                                       (swap! cnt inc))}
+        (fn []
+          (fp/fore-prob proj "42" "17" "26" "32")
+          (is (= @cnt 4)))))))
