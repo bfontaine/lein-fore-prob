@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 (upcoming)
+
+* minor memory usage improvement
+
 ## 0.1.1
 
 * HTML code is now stripped from problems’ descriptions
