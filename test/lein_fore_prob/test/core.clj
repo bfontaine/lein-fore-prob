@@ -17,7 +17,8 @@
    :scores {}
    :user "foo"
    :tags ["bar"]
-   :tests ["(= (__ 42) 21)" "(= (__ 21) 42)"]})
+   :tests ["(= (__ 42) 21)" "(= (__ 21) 42)"]
+   :prob-num 42})
 
 (def project-foo {:group "foo"})
 
@@ -42,7 +43,8 @@
    (mk-url 2) (fn [r] {:status 500 :headers {} :body ""})
    (mk-url 3) (fn [r] {:status 200 :headers {}
                        :body (json/generate-string
-                               {:restricted []
+                               {:prob-num 42
+                                :restricted []
                                 :title "Foo Bar"
                                 :times-solved 42
                                 :difficulty "Elementary"
@@ -252,6 +254,8 @@
     (is (= (#'fp/prob-url 0) "http://4clojure.com/api/problem/0")))
   (testing "negative number"
     (is (= (#'fp/prob-url -5) "http://4clojure.com/api/problem/-5")))
+  (testing "stringified number"
+    (is (= (#'fp/prob-url "5") "http://4clojure.com/api/problem/5")))
   (testing "positive number"
     (is (= (#'fp/prob-url 1) "http://4clojure.com/api/problem/1"))
     (is (= (#'fp/prob-url 42) "http://4clojure.com/api/problem/42"))
@@ -279,8 +283,8 @@
     (let [content (str "(deftest a-test\n"               ; default lein2
                        "  (testing \"FIXME, I fail.\"\n" ; test placeholder
                        "    (is (= 0 1))))")]
-      (is (= (with-redefs [slurp (constantly content)]
-             ""))))))
+      (is (= (with-redefs [slurp (constantly content)] (#'fp/get-tests {:title "yo"}))
+             "")))))
 
 (deftest get-src
   (testing "empty file"
@@ -293,6 +297,7 @@
   (with-redefs [spit (fn [f code & _]
                        (is (= "test/foo/core_test.clj" (. f getPath)))
                        (is (= (str "\n\n"
+                                   ";; problem " (:prob-num prob1) "\n"
                                    "(deftest can-foo-bar\n"
                                    "  (is (= (foo-bar-solution 42) 21))\n"
                                    "  (is (= (foo-bar-solution 21) 42)))\n")
@@ -303,6 +308,7 @@
   (with-redefs [spit (fn [f code & _]
                        (is (= "src/foo/core.clj" (. f getPath)))
                        (is (= (str "\n\n"
+                                   ";; problem " (:prob-num prob1) "\n"
                                    "(defn foo-bar-solution\n"
                                    "  [& args] ;; update args as needed\n"
                                    "  ;; write a foo bar\n"

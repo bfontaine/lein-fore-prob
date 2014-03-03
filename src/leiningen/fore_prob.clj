@@ -14,11 +14,13 @@
     (apply str (repeat lvl "  "))))
 
 (def ^{:private true} test-template
-  [ "(deftest can-" :prob-fn "\n"
+  [ ";; problem " :prob-num "\n"
+    "(deftest can-" :prob-fn "\n"
       :tests ")\n" ])
 
 (def ^{:private true} solution-template
-  [ "(defn " :prob-fn "-solution\n"
+  [ ";; problem " :prob-num "\n"
+    "(defn " :prob-fn "-solution\n"
     (indent) "[& args] ;; update args as needed\n"
     :description
     (indent) "nil)\n" ])
@@ -130,7 +132,8 @@
              (mk-template
                (cons "\n\n" test-template)
                {:prob-fn (prob->fn prob)
-                :tests (expand-prob-tests prob)}))))
+                :tests (expand-prob-tests prob)
+                :prob-num (prob :prob-num)}))))
 
 (defn- write-problem-src
   "add a given problem function in the current project"
@@ -139,7 +142,8 @@
         (mk-template
           (cons "\n\n" solution-template)
           {:prob-fn (prob->fn prob)
-           :description (-> prob :description desc->comments)})
+           :description (-> prob :description desc->comments)
+           :prob-num (prob :prob-num)})
         :append true))
 
 (defn- write-prob
@@ -171,8 +175,10 @@
   (let [req (http/get (prob-url n) {:as :json
                                     :throw-exceptions false})]
     (if (= (req :status) 200)
-      ;; we don't need scores here and it's polluting debug logs
-      (dissoc (req :body) :scores))))
+      (assoc
+        ;; we don't need scores here and it's polluting debug logs
+        (dissoc (req :body) :scores)
+        :prob-num n))))
 
 (defn- add-prob
   "add a problem to the current project from its number"
