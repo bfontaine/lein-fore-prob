@@ -13,12 +13,12 @@
   ([lvl]
     (apply str (repeat lvl "  "))))
 
-(def ^{:private true} test-template
+(def ^:private test-template
   [ ";; problem " :prob-num "\n"
     "(deftest can-" :prob-fn "\n"
       :tests ")\n" ])
 
-(def ^{:private true} solution-template
+(def ^:private solution-template
   [ ";; problem " :prob-num "\n"
     "(defn " :prob-fn "-solution\n"
     (indent) "[& args] ;; update args as needed\n"
