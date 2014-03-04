@@ -3,7 +3,8 @@
 ## 0.1.2 (upcoming)
 
 * minor memory usage improvement
-* problem number added before its function and its test
+* problem number added in a comment above its function and its test
+* problem difficulty added in the comment above its function
 
 ## 0.1.1
 
