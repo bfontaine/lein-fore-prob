@@ -3,7 +3,7 @@
   :url "https://github.com/bfontaine/lein-fore-prob"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[clj-http              "0.7.8"]
+  :dependencies [[clj-http              "0.9.0"]
                  [clj-soup/clojure-soup "0.1.1"]]
   :profiles {:dev {:dependencies [[cheshire      "5.3.1"]
                                   [clj-http-fake "0.7.8"]]}}
