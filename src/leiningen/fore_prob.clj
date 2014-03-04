@@ -19,7 +19,7 @@
       :tests ")\n" ])
 
 (def ^:private solution-template
-  [ ";; problem " :prob-num "\n"
+  [ ";; problem " :prob-num " (" :difficulty ")\n"
     "(defn " :prob-fn "-solution\n"
     (indent) "[& args] ;; update args as needed\n"
     :description
@@ -141,9 +141,9 @@
   (spit (src-path project)
         (mk-template
           (cons "\n\n" solution-template)
-          {:prob-fn (prob->fn prob)
-           :description (-> prob :description desc->comments)
-           :prob-num (prob :prob-num)})
+          (merge prob
+            {:prob-fn (prob->fn prob)
+             :description (-> prob :description desc->comments)}))
         :append true))
 
 (defn- write-prob
