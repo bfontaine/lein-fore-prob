@@ -299,6 +299,7 @@
                        (is (= "src/foo/core.clj" (. f getPath)))
                        (is (= (str "\n\n"
                                    ";; problem " (:prob-num prob1) " (" (:difficulty prob1) ")\n"
+                                   ";; restrictions: f1, f2\n"
                                    "(defn foo-bar-solution\n"
                                    "  [& args] ;; update args as needed\n"
                                    "  ;; write a foo bar\n"

@@ -20,6 +20,7 @@
 
 (def ^:private solution-template
   [ ";; problem " :prob-num " (" :difficulty ")\n"
+    :restrictions-str
     "(defn " :prob-fn "-solution\n"
     (indent) "[& args] ;; update args as needed\n"
     :description
@@ -143,7 +144,11 @@
           (cons "\n\n" solution-template)
           (merge prob
             {:prob-fn (prob->fn prob)
-             :description (-> prob :description desc->comments)}))
+             :description (-> prob :description desc->comments)
+             :restrictions-str (if-not (empty? (:restricted prob))
+                                 (str ";; restrictions: "
+                                      (cs/join ", " (:restricted prob))
+                                      "\n"))}))
         :append true))
 
 (defn- write-prob
