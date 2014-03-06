@@ -12,7 +12,7 @@
   {:title "Foo Bar"
    :description "write a foo bar"
    :difficulty "Medium"
-   :restricted []
+   :restricted ["f1" "f2"]
    :times-solved 42
    :scores {}
    :user "foo"
@@ -42,17 +42,7 @@
   {(mk-url 1) (fn [r] {:status 404 :headers {} :body ""})
    (mk-url 2) (fn [r] {:status 500 :headers {} :body ""})
    (mk-url 3) (fn [r] {:status 200 :headers {}
-                       :body (json/generate-string
-                               {:prob-num 42
-                                :restricted []
-                                :title "Foo Bar"
-                                :times-solved 42
-                                :difficulty "Elementary"
-                                :scores {"45" 42}
-                                :tests ["(= __ true)"]
-                                :user "someone"
-                                :description "This is a problem"
-                                :tags []})})})
+                       :body (json/generate-string prob1)})})
 
 (defn assert-println
   "test helper: return a test to replace 'println' and check that a specific
