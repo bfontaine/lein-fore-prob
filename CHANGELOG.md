@@ -4,7 +4,8 @@
 
 * minor memory usage improvement
 * problem number added in a comment above its function and its test
-* problem difficulty added in the comment above its function
+* problem difficulty and restricted functions added in the comment above its
+  solution placeholder
 
 ## 0.1.1
 
