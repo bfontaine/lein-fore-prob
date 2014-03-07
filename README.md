@@ -55,6 +55,29 @@ it over to [4clojure.org][4clj] when you’re happy with it.
 [98]: http://www.4clojure.com/problem/98 "98. Equivalence Classes"
 [4clj]: http://www.4clojure.com/
 
+### Example
+
+Here is what `lein fore-prob 43` would add, as of version 0.1.2-SNAPSHOT:
+
+```clj
+;; in src/your-project/core.clj:
+
+;; problem 43 (Medium)
+(defn reverse-interleave-solution
+  [& args] ;; update args as needed
+  ;; Write a function which reverses the interleave process into x number of subsequences.
+  nil)
+
+
+;; in test/your-project/core_test.clj:
+
+;; problem 43
+(deftest can-reverse-interleave
+  (is (= (reverse-interleave-solution [1 2 3 4 5 6] 2) '((1 3 5) (2 4 6))))
+  (is (= (reverse-interleave-solution (range 9) 3) '((0 3 6) (1 4 7) (2 5 8))))
+  (is (= (reverse-interleave-solution (range 10) 5) '((0 5) (1 6) (2 7) (3 8) (4 9)))))
+```
+
 ## License
 
 Copyright © 2014 Baptiste Fontaine
