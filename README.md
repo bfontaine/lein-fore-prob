@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/bfontaine/lein-fore-prob/badge.png)](https://coveralls.io/r/bfontaine/lein-fore-prob)
 
 A leiningen plugin which given a problem from 4clojure will populate the
-current project's tests with the problem's tests. This is based on
+current project’s tests with the problem’s tests. This is based on
 [`lein-foreclojure-plugin`][lfp] code updated for Leiningen 2.
 
 [lfp]: https://github.com/broquaint/lein-foreclojure-plugin
@@ -35,7 +35,7 @@ You can use multiple problem ids at the same time. Use the `open` subcommand
 (as of version 0.1.2-SNAPSHOT) to open these problems in a browser instead of
 adding it to the current project.
 
-## What's added
+## What’s added
 
 Given a new project like this:
 
