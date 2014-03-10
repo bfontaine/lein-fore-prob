@@ -259,7 +259,7 @@
     (testing "500 error"
       (is (nil? (#'fp/fetch-prob-data 2))))
     (testing "success"
-      (is (= (:title (#'fp/fetch-prob-data 3)) "Foo Bar")))))
+      (is (= (:title (#'fp/fetch-prob-data 3)) (:title prob1))))))
 
 (deftest get-tests
   (testing "empty file"
