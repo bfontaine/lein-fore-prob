@@ -1,9 +1,10 @@
 (ns leiningen.fore-prob
   "Populate the current project with a 4clojure problem."
-  (:require [clj-http.client :as http]
-            [clojure.java.io :as io]
-            [clojure.string  :as cs]
-            [jsoup.soup      :as soup]))
+  (:require [clj-http.client     :as http]
+            [clojure.java.io     :as io]
+            [clojure.string      :as cs]
+            [jsoup.soup          :as soup]
+            [clojure.java.browse :as browse]))
 
 ;; == Formatting helpers ==
 
@@ -197,10 +198,21 @@
                  (. e getMessage))))
     (println (str "Cannot get problem " prob-num "."))))
 
+
+(def ^:private problem-url-root "http://www.4clojure.com/problem/")
+
+(defn- open-prob-url
+  "open one or more problem URLs in a browser"
+  [& prob-nums]
+  (doseq [n prob-nums]
+    (browse/browse-url (str problem-url-root n))))
+
 ;; == main function ==
 
 (defn fore-prob
   "main function, used by leiningen"
   [project & prob-nums]
-  (doseq [n prob-nums]
-    (add-prob project n)))
+  (if (= (first prob-nums) "open")
+    (apply open-prob-url (rest prob-nums))
+    (doseq [n prob-nums]
+      (add-prob project n))))

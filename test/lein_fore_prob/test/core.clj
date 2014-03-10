@@ -3,7 +3,8 @@
         clj-http.fake)
   (:require [leiningen.fore-prob :as fp]
             [cheshire.core       :as json]
-            [clojure.string      :as cs])
+            [clojure.string      :as cs]
+            [clojure.java.browse :as browse])
   (:import  [java.io File]))
 
 ;; samples & helpers
@@ -399,25 +400,68 @@
           (#'fp/add-prob project-foo 42)
           (is (= @written true)))))))
 
-(deftest fore-prob
+(deftest open-prob-url
   (testing "one prob"
-    (let [added (atom false)
-          proj  {:foo :bar}
-          n     "42"]
-      (with-redefs-fn {#'fp/add-prob (fn [prj prob-num]
-                                       (is (= prj proj))
-                                       (is (= prob-num n))
-                                       (swap! added not))}
+    (let [opened (atom false)]
+      (with-redefs-fn
+        {#'browse/browse-url (fn [u]
+                               (swap! opened not)
+                               (is (= u "http://www.4clojure.com/problem/42")))}
         (fn []
-          (fp/fore-prob proj n)
-          (is (= @added true))))))
+          (#'fp/open-prob-url 42)
+          (is (= @opened true))))))
 
   (testing "multiple probs"
-    (let [cnt (atom 0)
-          proj  {:foo :bar}]
-      (with-redefs-fn {#'fp/add-prob (fn [prj _]
-                                       (is (= prj proj))
-                                       (swap! cnt inc))}
-        (fn []
-          (fp/fore-prob proj "42" "17" "26" "32")
-          (is (= @cnt 4)))))))
+      (let [opened (atom #{})
+            probs [42 37 25]]
+        (with-redefs-fn {#'browse/browse-url (fn [u]
+                                               (swap! opened #(conj % u)))}
+          (fn []
+            (apply #'fp/open-prob-url probs)
+            (is (= @opened
+                   (into #{}
+                         (map
+                           #(str "http://www.4clojure.com/problem/" %)
+                           probs)))))))))
+
+(deftest fore-prob
+  (let [proj {:foo :bar}]
+    (testing "one prob"
+      (let [added (atom false)
+            n     "42"]
+        (with-redefs-fn {#'fp/add-prob (fn [prj prob-num]
+                                         (is (= prj proj))
+                                         (is (= prob-num n))
+                                         (swap! added not))}
+          (fn []
+            (fp/fore-prob proj n)
+            (is (= @added true))))))
+
+    (testing "multiple probs"
+      (let [cnt (atom 0)]
+        (with-redefs-fn {#'fp/add-prob (fn [prj _]
+                                         (is (= prj proj))
+                                         (swap! cnt inc))}
+          (fn []
+            (fp/fore-prob proj "42" "17" "26" "32")
+            (is (= @cnt 4))))))
+
+    (testing "opening one prob"
+      (let [opened (atom false)
+            n      "32"]
+        (with-redefs-fn {#'fp/open-prob-url (fn [& pn]
+                                              (is (= pn [n]))
+                                              (swap! opened not))}
+          (fn []
+            (fp/fore-prob proj "open" n)
+            (is (= @opened true))))))
+
+    (testing "opening one prob"
+      (let [opened (atom [])
+            probs  ["34" "12" "17"]]
+        (with-redefs-fn {#'fp/open-prob-url (fn [& pn]
+                                              (is (= pn probs))
+                                              (swap! opened #(concat % probs)))}
+          (fn []
+            (fp/fore-prob proj "open" "34" "12" "17")
+            (is (= @opened probs))))))))
