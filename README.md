@@ -28,8 +28,12 @@ cd probs-from-4clj
 Then use the plugin:
 
 ```
-lein fore-prob <problem id>
+lein fore-prob [open] <problem id> [<problem id> ...]
 ```
+
+You can use multiple problem ids at the same time. Use the `open` subcommand
+(as of version 0.1.2-SNAPSHOT) to open these problems in a browser instead of
+adding it to the current project.
 
 ## What's added
 

@@ -6,6 +6,8 @@
 * problem number added in a comment above its function and its test
 * problem difficulty and restricted functions added in the comment above its
   solution placeholder
+* `open` subcommand added: `lein fore-prob open 42` will open problem 42 in a
+  browser.
 
 ## 0.1.1
 
