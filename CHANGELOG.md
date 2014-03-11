@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.2 (upcoming)
+## 0.1.2
 
 * minor memory usage improvement
 * problem number added in a comment above its function and its test

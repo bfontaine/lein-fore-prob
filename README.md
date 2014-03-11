@@ -15,7 +15,7 @@ Add the plugin in your `~/.lein/profiles.clj`:
 
 ```clj
 {:user {:plugins [ ; ... other plugins ...
-                  [lein-fore-prob "0.1.1"]]}}
+                  [lein-fore-prob "0.1.2"]]}}
 ```
 
 Create a project to store 4clojure problems:
@@ -31,9 +31,8 @@ Then use the plugin:
 lein fore-prob [open] <problem id> [<problem id> ...]
 ```
 
-You can use multiple problem ids at the same time. Use the `open` subcommand
-(as of version 0.1.2-SNAPSHOT) to open these problems in a browser instead of
-adding it to the current project.
+You can use multiple problem ids at the same time. Use the `open` subcommand to
+open these problems in a browser instead of adding it to the current project.
 
 ## What’s added
 
@@ -61,7 +60,7 @@ it over to [4clojure.org][4clj] when you’re happy with it.
 
 ### Example
 
-Here is what `lein fore-prob 43` would add, as of version 0.1.2-SNAPSHOT:
+Here is what `lein fore-prob 43` would add:
 
 ```clj
 ;; in src/your-project/core.clj:
