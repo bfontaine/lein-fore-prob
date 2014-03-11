@@ -167,7 +167,7 @@
 
 ;; == 4clojure API interaction ==
 
-(def fore-url "http://4clojure.com/api/problem/")
+(def ^:private fore-url "http://4clojure.com/api/problem/")
 
 (defn- prob-url
   "return an API URL for a problem number. This doesn’t check that the URL is
