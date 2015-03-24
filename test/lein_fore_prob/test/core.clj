@@ -301,10 +301,10 @@
                        (is (= (str "\n\n"
                                    ";; problem " (:prob-num prob1) " (" (:difficulty prob1) ")\n"
                                    ";; restrictions: f1, f2\n"
-                                   "(defn foo-bar-solution\n"
-                                   "  [& args] ;; update args as needed\n"
+                                   "(def foo-bar-solution\n"
+                                   "  (fn [& args] ;; update args as needed\n"
                                    "  ;; write a foo bar\n"
-                                   "  nil)\n")
+                                   "  nil))\n")
                               code)))]
     (#'fp/write-problem-src project-foo prob1)))
 
@@ -313,10 +313,10 @@
                        (is (= "src/foo/core.clj" (. f getPath)))
                        (is (= (str "\n\n"
                                    ";; problem " (:prob-num prob1) " (" (:difficulty prob1) ")\n"
-                                   "(defn foo-bar-solution\n"
-                                   "  [& args] ;; update args as needed\n"
+                                   "(def foo-bar-solution\n"
+                                   "  (fn [& args] ;; update args as needed\n"
                                    "  ;; write a foo bar\n"
-                                   "  nil)\n")
+                                   "  nil))\n")
                               code)))]
     (#'fp/write-problem-src project-foo (dissoc prob1 :restricted))))
 
