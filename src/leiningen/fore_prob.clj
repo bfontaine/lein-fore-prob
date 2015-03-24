@@ -22,10 +22,10 @@
 (def ^:private solution-template
   [ ";; problem " :prob-num " (" :difficulty ")\n"
     :restrictions-str
-    "(defn " :prob-fn "-solution\n"
-    (indent) "[& args] ;; update args as needed\n"
+    "(def " :prob-fn "-solution\n"
+    (indent) "(fn [& args] ;; update args as needed\n"
     :description
-    (indent) "nil)\n" ])
+    (indent) "nil))\n" ])
 
 (defn- mk-template
   "return a string from a template and a map"
