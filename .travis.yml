@@ -8,6 +8,8 @@ script:
   - lein2 with-profile dev,1.4 test
   - lein2 with-profile dev,1.5 test
   - lein2 with-profile dev,1.6 test
+  - lein2 with-profile dev,1.7 test
+  - lein2 with-profile dev,1.8 test
 jdk:
   - openjdk7
   - openjdk6
