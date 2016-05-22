@@ -35,11 +35,18 @@
 (defn- prob->fn
   "Convert a problem into a valid function name"
   [prob]
-  (.toLowerCase
+  ;; We only allow a subset of valid symbol chars not to have to deal with
+  ;; special cases (e.g. `:` is valid only if not the first char). This subset
+  ;; is sufficient to cover all problems for now.
+  ;; https://github.com/edn-format/edn#symbols
+  (let [pat "[^a-zA-Z0-9=><&%$?_!]+"]
     (-> prob
       :title
-      (cs/replace #"^\W+|\W+$" "") ; trim special chars
-      (cs/replace #"\W+" "-"))))
+      (str)
+      (.toLowerCase)
+      (cs/replace (re-pattern
+                    (str "^" pat "|" pat "$")) "") ; trim special chars
+      (cs/replace (re-pattern pat) "-"))))
 
 (defn- strip-html
   "strip HTML tags from a string"

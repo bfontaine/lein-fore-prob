@@ -83,10 +83,19 @@
   (testing "multiple special chars"
     (is (= (#'fp/prob->fn {:title "a***b"}) "a-b")))
   (testing "ending with special chars"
-    (is (= (#'fp/prob->fn {:title "I got 99$:)"}) "i-got-99")))
+    (is (= (#'fp/prob->fn {:title "I got 99$:)"}) "i-got-99$")))
   (testing "starting with special chars"
-    (is (= (#'fp/prob->fn {:title "$ is the dollar symbol"})
-           "is-the-dollar-symbol"))))
+    (is (= (#'fp/prob->fn {:title "{ is the dollar symbol"})
+           "is-the-dollar-symbol")))
+ (testing "with special but valid chars"
+   (is (= (#'fp/prob->fn {:title "a problem with ->"})
+          "a-problem-with->"))
+   (is (= (#'fp/prob->fn {:title "a problem with ->>"})
+          "a-problem-with->>"))
+   (is (= (#'fp/prob->fn {:title "%!"}) "%!")))
+ (testing "with special chars including valid & invalid ones"
+   (is (= (#'fp/prob->fn {:title "hey! the problem is here."})
+          "hey!-the-problem-is-here"))))
 
 (deftest indent
   (testing "no arg"
