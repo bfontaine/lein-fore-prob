@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 (upcoming release)
+
+* Special characters allowed in problem names, thus fixing the name conflict
+  that occurs when two problems share the same name apart from a special char.
+
 ## 0.1.2
 
 * minor memory usage improvement
