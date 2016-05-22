@@ -279,10 +279,10 @@
 
 (deftest get-src
   (testing "empty file"
-    (is (= (with-redefs [slurp (constantly "")] (#'fp/get-src {:title "yo"})))
-        ""))
-  (is (= (with-redefs [slurp (constantly "xY3")] (#'fp/get-src {:title "yo"})))
-      "xY3"))
+    (is (= (with-redefs [slurp (constantly "")] (#'fp/get-src {:title "yo"}))
+        "")))
+  (is (= (with-redefs [slurp (constantly "xY3")] (#'fp/get-src {:title "yo"}))
+      "xY3")))
 
 (deftest write-problem-tests
   (with-redefs [spit (fn [f code & _]
