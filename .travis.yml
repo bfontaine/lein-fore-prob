@@ -3,10 +3,10 @@ after_script:
   - bash -ex test/coveralls.sh
 script:
   # clj-http-fake doesn't work when multiple profiles are used in a row
-  - lein2 with-profile dev test
-  - lein2 with-profile dev,1.8 test
-  - lein2 with-profile dev,1.9 test
-  - lein2 with-profile dev,1.10 test
+  - lein with-profile dev test
+  - lein with-profile dev,1.8 test
+  - lein with-profile dev,1.9 test
+  - lein with-profile dev,1.10 test
 jdk:
   - oraclejdk8
   - oraclejdk9
