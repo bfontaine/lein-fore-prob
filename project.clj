@@ -4,6 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "https://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[clj-http              "3.10.0"]
+                 [cheshire              "5.8.1"]
                  [clj-soup/clojure-soup "0.1.3"]]
   :profiles {:dev {}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
