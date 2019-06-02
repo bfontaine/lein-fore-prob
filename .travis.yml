@@ -1,17 +1,15 @@
 language: clojure
-lein: lein2
 after_script:
   - bash -ex test/coveralls.sh
 script:
   # clj-http-fake doesn't work when multiple profiles are used in a row
   - lein2 with-profile dev test
-  - lein2 with-profile dev,1.4 test
-  - lein2 with-profile dev,1.5 test
-  - lein2 with-profile dev,1.6 test
-  - lein2 with-profile dev,1.7 test
   - lein2 with-profile dev,1.8 test
+  - lein2 with-profile dev,1.9 test
+  - lein2 with-profile dev,1.10 test
 jdk:
-  - openjdk7
-  - openjdk6
+  - oraclejdk8
+  - oraclejdk9
+  - openjdk8
 notifications:
   email: false
