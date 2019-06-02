@@ -1,9 +1,12 @@
 # Changelog
 
-## 0.1.3 (upcoming release)
+## 0.1.3 (2019/06/03)
 
 * Special characters allowed in problem names, thus fixing the name conflict
   that occurs when two problems share the same name apart from a special char.
+* Bump dependencies. This enables 1.10 support (see [#7][issue-7]).
+
+[issue-7]: https://github.com/bfontaine/lein-fore-prob/issues/7
 
 ## 0.1.2
 
