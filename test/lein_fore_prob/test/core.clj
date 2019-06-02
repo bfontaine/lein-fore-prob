@@ -1,10 +1,8 @@
 (ns lein-fore-prob.test.core
-  (:use clojure.test
-        clj-http.fake)
   (:require [leiningen.fore-prob :as fp]
-            [cheshire.core       :as json]
             [clojure.string      :as cs]
-            [clojure.java.browse :as browse])
+            [clojure.java.browse :as browse]
+            [clojure.test :refer :all])
   (:import  [java.io File]))
 
 ;; samples & helpers
@@ -38,12 +36,6 @@
 
 (def ^{:doc "test helper: create an url for a problem number"} mk-url
   #'fp/prob-url)
-
-(def fake-routes
-  {(mk-url 1) (fn [r] {:status 404 :headers {} :body ""})
-   (mk-url 2) (fn [r] {:status 500 :headers {} :body ""})
-   (mk-url 3) (fn [r] {:status 200 :headers {}
-                       :body (json/generate-string prob1)})})
 
 (defn assert-println
   "test helper: return a test to replace 'println' and check that a specific
@@ -260,15 +252,6 @@
     (is (= (#'fp/prob-url 1) "http://4clojure.com/api/problem/1"))
     (is (= (#'fp/prob-url 42) "http://4clojure.com/api/problem/42"))
     (is (= (#'fp/prob-url 133) "http://4clojure.com/api/problem/133"))))
-
-(deftest fetch-prob-data
-  (with-fake-routes-in-isolation fake-routes
-    (testing "404 error"
-      (is (nil? (#'fp/fetch-prob-data 1))))
-    (testing "500 error"
-      (is (nil? (#'fp/fetch-prob-data 2))))
-    (testing "success"
-      (is (= (:title (#'fp/fetch-prob-data 3)) (:title prob1))))))
 
 (deftest get-tests
   (testing "empty file"
