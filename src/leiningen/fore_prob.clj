@@ -1,9 +1,9 @@
 (ns leiningen.fore-prob
   "Populate the current project with a 4clojure problem."
-  (:require [clj-http.client     :as http]
-            [clojure.java.io     :as io]
-            [clojure.string      :as cs]
-            [jsoup.soup          :as soup]
+  (:require [clj-http.client :as http]
+            [clojure.java.io :as io]
+            [clojure.string :as cs]
+            [jsoup.soup :as soup]
             [clojure.java.browse :as browse]))
 
 ;; == Formatting helpers ==
@@ -12,20 +12,20 @@
   "Return a string representing the given level of indentation"
   ([] (indent 1))
   ([lvl]
-    (apply str (repeat lvl "  "))))
+   (apply str (repeat lvl "  "))))
 
 (def ^:private test-template
-  [ ";; problem " :prob-num "\n"
-    "(deftest can-" :prob-fn "\n"
-      :tests ")\n" ])
+  [";; problem " :prob-num "\n"
+   "(deftest can-" :prob-fn "\n"
+   :tests ")\n"])
 
 (def ^:private solution-template
-  [ ";; problem " :prob-num " (" :difficulty ")\n"
-    :restrictions-str
-    "(def " :prob-fn "-solution\n"
-    (indent) "(fn [& args] ;; update args as needed\n"
-    :description
-    (indent) "nil))\n" ])
+  [";; problem " :prob-num " (" :difficulty ")\n"
+   :restrictions-str
+   "(def " :prob-fn "-solution\n"
+   (indent) "(fn [& args] ;; update args as needed\n"
+   :description
+   (indent) "nil))\n"])
 
 (defn- mk-template
   "return a string from a template and a map"
@@ -41,12 +41,12 @@
   ;; https://github.com/edn-format/edn#symbols
   (let [pat "[^a-zA-Z0-9=><&%$?_!]+"]
     (-> prob
-      :title
-      (str)
-      (.toLowerCase)
-      (cs/replace (re-pattern
-                    (str "^" pat "|" pat "$")) "") ; trim special chars
-      (cs/replace (re-pattern pat) "-"))))
+        :title
+        (str)
+        (.toLowerCase)
+        (cs/replace (re-pattern
+                      (str "^" pat "|" pat "$")) "")                  ; trim special chars
+        (cs/replace (re-pattern pat) "-"))))
 
 (defn- strip-html
   "strip HTML tags from a string"
@@ -69,13 +69,13 @@
    indentation"
   ([desc] (desc->comments desc 1))
   ([desc i]
-    (if (empty? desc)
-      ""
-      (->
-        desc
-        (strip-html)
-        (cs/replace #"\r?\n" (str "\n" (indent i) ";; "))
-        (#(str (indent i) ";; " % "\n"))))))
+   (if (empty? desc)
+     ""
+     (->
+       desc
+       (strip-html)
+       (cs/replace #"\r?\n" (str "\n" (indent i) ";; "))
+       (#(str (indent i) ";; " % "\n"))))))
 
 (defn- expand-prob-tests
   "expand a problem’s tests string"
@@ -85,7 +85,7 @@
       (prob :tests)
       (map #(cs/replace % #"\b__\b" prob-fn))
       (map #(cs/replace % #"\r\n" "\n"))
-      (map #(str (indent) "(is " % ")")) ; wrap tests in 'is calls
+      (map #(str (indent) "(is " % ")"))                              ; wrap tests in 'is calls
       (cs/join "\n"))))
 
 ;; == Files handling ==
@@ -140,8 +140,8 @@
         (str existing-tests
              (mk-template
                (cons "\n\n" test-template)
-               {:prob-fn (prob->fn prob)
-                :tests (expand-prob-tests prob)
+               {:prob-fn  (prob->fn prob)
+                :tests    (expand-prob-tests prob)
                 :prob-num (prob :prob-num)}))))
 
 (defn- write-problem-src
@@ -151,19 +151,19 @@
         (mk-template
           (cons "\n\n" solution-template)
           (merge prob
-            {:prob-fn (prob->fn prob)
-             :description (-> prob :description desc->comments)
-             :restrictions-str (if-not (empty? (:restricted prob))
-                                 (str ";; restrictions: "
-                                      (cs/join ", " (:restricted prob))
-                                      "\n"))}))
+                 {:prob-fn          (prob->fn prob)
+                  :description      (-> prob :description desc->comments)
+                  :restrictions-str (if-not (empty? (:restricted prob))
+                                      (str ";; restrictions: "
+                                           (cs/join ", " (:restricted prob))
+                                           "\n"))}))
         :append true))
 
 (defn- write-prob
   "write a problem source and tests"
   [project prob]
   (let [tests  (get-tests project)
-        src    (get-src   project)
+        src    (get-src project)
         probfn (prob->fn prob)]
     (if-not (has-problem-tests? tests probfn)
       (write-problem-tests project tests prob)
@@ -185,7 +185,7 @@
 (defn- fetch-prob-data
   "return a problem map from its number using 4clojure API"
   [n]
-  (let [req (http/get (prob-url n) {:as :json
+  (let [req (http/get (prob-url n) {:as               :json
                                     :throw-exceptions false})]
     (if (= (req :status) 200)
       (assoc
