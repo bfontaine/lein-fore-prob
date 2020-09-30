@@ -83,7 +83,7 @@ Here is what `lein fore-prob 43` would add:
 
 ## License
 
-Copyright © 2014-2019 Baptiste Fontaine
+Copyright © 2014-2020 Baptiste Fontaine
 
 **Original code:**
 
