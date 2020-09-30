@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+* Tests are now named following the `<function> + "-test"` convention
+* Exceptions are not caught when writing a problem anymore
+* Bump dependencies
+* Rewrite the code so it’s easier to read
+
 ## 0.1.3 (2019/06/03)
 
 * Special characters allowed in problem names, thus fixing the name conflict

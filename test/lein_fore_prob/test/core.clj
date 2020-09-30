@@ -1,13 +1,13 @@
 (ns lein-fore-prob.test.core
   (:require [leiningen.fore-prob :as fp]
-            [clojure.string :as cs]
+            [clojure.string :as str]
             [clojure.java.browse :as browse]
             [clojure.test :refer :all])
   (:import [java.io File]))
 
 ;; samples & helpers
 
-(def prob1
+(def problem-1
   {:title        "Foo Bar"
    :description  "write a foo bar"
    :difficulty   "Medium"
@@ -35,14 +35,14 @@
   (apply str (interpose sep parts)))
 
 (def ^{:doc "test helper: create an url for a problem number"} mk-url
-  #'fp/prob-url)
+  #'fp/problem-url)
 
 (defn assert-println
   "test helper: return a test to replace 'println' and check that a specific
    string is \"printed\""
   [s]
   (fn [& ss]
-    (is (= (cs/join " " ss) s))))
+    (is (= (str/join " " ss) s))))
 
 (deftest project->path
   (testing "empty ns"
@@ -61,144 +61,126 @@
 
 (deftest prob->fn
   (testing "one word"
-    (is (= (#'fp/prob->fn {:title "foo"}) "foo")))
+    (is (= (#'fp/problem->fn {:title "foo"}) "foo")))
   (testing "two words"
-    (is (= (#'fp/prob->fn {:title "foo bar"}) "foo-bar")))
+    (is (= (#'fp/problem->fn {:title "foo bar"}) "foo-bar")))
   (testing "multiple words"
-    (is (= (#'fp/prob->fn {:title "foo bar qux"}) "foo-bar-qux")))
+    (is (= (#'fp/problem->fn {:title "foo bar qux"}) "foo-bar-qux")))
   (testing "capitalized word"
-    (is (= (#'fp/prob->fn {:title "Foo"}) "foo")))
+    (is (= (#'fp/problem->fn {:title "Foo"}) "foo")))
   (testing "mixed case words"
-    (is (= (#'fp/prob->fn {:title "FoO bAR QuX"}) "foo-bar-qux")))
+    (is (= (#'fp/problem->fn {:title "FoO bAR QuX"}) "foo-bar-qux")))
   (testing "special char"
-    (is (= (#'fp/prob->fn {:title "a*b"}) "a-b")))
+    (is (= (#'fp/problem->fn {:title "a*b"}) "a-b")))
   (testing "multiple special chars"
-    (is (= (#'fp/prob->fn {:title "a***b"}) "a-b")))
+    (is (= (#'fp/problem->fn {:title "a***b"}) "a-b")))
   (testing "ending with special chars"
-    (is (= (#'fp/prob->fn {:title "I got 99$:)"}) "i-got-99$")))
+    (is (= (#'fp/problem->fn {:title "I got 99$:)"}) "i-got-99$")))
   (testing "starting with special chars"
-    (is (= (#'fp/prob->fn {:title "{ is the dollar symbol"})
+    (is (= (#'fp/problem->fn {:title "{ is the dollar symbol"})
            "is-the-dollar-symbol")))
   (testing "with special but valid chars"
-    (is (= (#'fp/prob->fn {:title "a problem with ->"})
+    (is (= (#'fp/problem->fn {:title "a problem with ->"})
            "a-problem-with->"))
-    (is (= (#'fp/prob->fn {:title "a problem with ->>"})
+    (is (= (#'fp/problem->fn {:title "a problem with ->>"})
            "a-problem-with->>"))
-    (is (= (#'fp/prob->fn {:title "%!"}) "%!")))
+    (is (= (#'fp/problem->fn {:title "%!"}) "%!")))
   (testing "with special chars including valid & invalid ones"
-    (is (= (#'fp/prob->fn {:title "hey! the problem is here."})
+    (is (= (#'fp/problem->fn {:title "hey! the problem is here."})
            "hey!-the-problem-is-here"))))
-
-(deftest indent
-  (testing "no arg"
-    (is (= (#'fp/indent) "  ")))
-  (testing "negative count"
-    (is (= (#'fp/indent -42) "")))
-  (testing "zero"
-    (is (= (#'fp/indent 0) "")))
-  (testing "one"
-    (is (= (#'fp/indent 1) "  ")))
-  (testing "more than one"
-    (is (= (#'fp/indent 3) "      "))))
 
 (deftest desc->comments
   (testing "empty description"
-    (is (= (#'fp/desc->comments "") "")))
+    (is (= (#'fp/description->comments "") "")))
   (testing "one line"
-    (is (= (#'fp/desc->comments "foobar") "  ;; foobar\n")))
-  (testing "one line zero indentation"
-    (is (= (#'fp/desc->comments "foobar" 0) ";; foobar\n")))
+    (is (= (#'fp/description->comments "foobar") "    ;; foobar")))
   (testing "multiple lines"
-    (is (= (#'fp/desc->comments "foo\nbar") "  ;; foo\n  ;; bar\n")))
-  (testing "multiple lines with zero indentation"
-    (is (= (#'fp/desc->comments "foo\nbar" 0) ";; foo\n;; bar\n")))
-  (testing "multiple lines with and indentation=2"
-    (is (= (#'fp/desc->comments "foo\nbar" 2) "    ;; foo\n    ;; bar\n")))
+    (is (= (#'fp/description->comments "foo\nbar") "    ;; foo\n    ;; bar")))
   (testing "UNIX line-ending only"
-    (is (= (re-find #"\r\n" (#'fp/desc->comments "foo\r\nbar\nq\r\na")) nil)))
+    (is (nil? (re-find #"\r\n" (#'fp/description->comments "foo\r\nbar\nq\r\na")))))
   (testing "stripping HTML (#1)"
-    (is (= (#'fp/desc->comments "foo <a href=\"/qux\">bar</a>")
-           "  ;; foo bar\n"))
+    (is (= (#'fp/description->comments "foo <a href=\"/qux\">bar</a>")
+           "    ;; foo bar"))
     (testing "stripping HTML while preserving newlines (#1)"
-      (is (= (#'fp/desc->comments "foo\n <a href=\"/qux\">bar</a><br />qux")
-             "  ;; foo\n  ;; bar\n  ;; qux\n")))))
+      (is (= (#'fp/description->comments "foo\n <a href=\"/qux\">bar</a><br />qux")
+             "    ;; foo\n    ;; bar\n    ;; qux")))))
 
 (deftest tests-path
   (testing "class"
-    (is (= (type (#'fp/tests-path project-foo)) java.io.File)))
+    (is (= (type (#'fp/tests-path project-foo)) File)))
   (testing "empty namespace"
-    (is (= (. (#'fp/tests-path {:group ""}) getPath)
+    (is (= (.getPath (#'fp/tests-path {:group ""}))
            (mk-path tests-dir tests-file))))
   (testing "one-word namespace"
-    (is (= (. (#'fp/tests-path {:group "foo"}) getPath)
+    (is (= (.getPath (#'fp/tests-path {:group "foo"}))
            (mk-path tests-dir "foo" tests-file))))
   (testing "namespace with dots"
-    (is (= (. (#'fp/tests-path {:group "foo.bar"}) getPath)
+    (is (= (.getPath (#'fp/tests-path {:group "foo.bar"}))
            (mk-path tests-dir "foo" "bar" tests-file))))
   (testing "dashed namespace"
-    (is (= (. (#'fp/tests-path {:group "foo-bar"}) getPath)
+    (is (= (.getPath (#'fp/tests-path {:group "foo-bar"}))
            (mk-path tests-dir "foo_bar" tests-file))))
   (testing "dashed namespace with dots"
-    (is (= (. (#'fp/tests-path {:group "foo-bar.qux"}) getPath)
+    (is (= (.getPath (#'fp/tests-path {:group "foo-bar.qux"}))
            (mk-path tests-dir "foo_bar" "qux" tests-file)))))
 
 (deftest src-path
   (testing "class"
-    (is (= (type (#'fp/src-path project-foo)) java.io.File)))
+    (is (= (type (#'fp/src-path project-foo)) File)))
   (testing "empty namespace"
-    (is (= (. (#'fp/src-path {:group ""}) getPath)
+    (is (= (.getPath (#'fp/src-path {:group ""}))
            (mk-path src-dir src-file))))
   (testing "one-word namespace"
-    (is (= (. (#'fp/src-path {:group "foo"}) getPath)
+    (is (= (.getPath (#'fp/src-path {:group "foo"}))
            (mk-path src-dir "foo" src-file))))
   (testing "namespace with dots"
-    (is (= (. (#'fp/src-path {:group "foo.bar"}) getPath)
+    (is (= (.getPath (#'fp/src-path {:group "foo.bar"}))
            (mk-path src-dir "foo" "bar" src-file))))
   (testing "dashed namespace"
-    (is (= (. (#'fp/src-path {:group "foo-bar"}) getPath)
+    (is (= (.getPath (#'fp/src-path {:group "foo-bar"}))
            (mk-path src-dir "foo_bar" src-file))))
   (testing "dashed namespace with dots"
-    (is (= (. (#'fp/src-path {:group "foo-bar.qux"}) getPath)
+    (is (= (.getPath (#'fp/src-path {:group "foo-bar.qux"}))
            (mk-path src-dir "foo_bar" "qux" src-file)))))
 
 (deftest expand-prob-tests
   (testing "no tests"
-    (is (= (#'fp/expand-prob-tests (assoc prob1 :tests [])) "")))
+    (is (= (#'fp/expand-problem-tests (assoc problem-1 :tests [])) "")))
   (testing "one test with no function call"
-    (is (= (#'fp/expand-prob-tests (assoc prob1 :tests ["true"]))
+    (is (= (#'fp/expand-problem-tests (assoc problem-1 :tests ["true"]))
            "  (is true)")))
   (testing "two tests with no function call"
-    (is (= (#'fp/expand-prob-tests (assoc prob1 :tests ["true" "true"]))
+    (is (= (#'fp/expand-problem-tests (assoc problem-1 :tests ["true" "true"]))
            "  (is true)\n  (is true)")))
   (testing "one test with function call, no arguments"
-    (is (= (#'fp/expand-prob-tests (assoc prob1 :tests ["(= (__) 2)"]))
+    (is (= (#'fp/expand-problem-tests (assoc problem-1 :tests ["(= (__) 2)"]))
            "  (is (= (foo-bar-solution) 2))")))
   (testing "one test with function call, one argument"
-    (is (= (#'fp/expand-prob-tests (assoc prob1 :tests ["(= (__ 42) 3)"]))
+    (is (= (#'fp/expand-problem-tests (assoc problem-1 :tests ["(= (__ 42) 3)"]))
            "  (is (= (foo-bar-solution 42) 3))")))
   (testing "one test with function call, multiple arguments"
-    (is (= (#'fp/expand-prob-tests
-             (assoc prob1 :tests ["(= (__ 42 \"bar\") 4)"]))
+    (is (= (#'fp/expand-problem-tests
+             (assoc problem-1 :tests ["(= (__ 42 \"bar\") 4)"]))
            "  (is (= (foo-bar-solution 42 \"bar\") 4))")))
   (testing "two tests with function call, one argument"
-    (is (= (#'fp/expand-prob-tests
-             (assoc prob1 :tests ["(= (__ 2) 17)" "(= (__ 3) 42)"]))
+    (is (= (#'fp/expand-problem-tests
+             (assoc problem-1 :tests ["(= (__ 2) 17)" "(= (__ 3) 42)"]))
            (str "  (is (= (foo-bar-solution 2) 17))\n"
                 "  (is (= (foo-bar-solution 3) 42))"))))
   (testing "multiple tests with function call, multiple arguments"
-    (is (= (#'fp/expand-prob-tests
-             (assoc prob1
+    (is (= (#'fp/expand-problem-tests
+             (assoc problem-1
                :tests
                ["(= (__ 2 4) 17)" "(= (__ 3 1) 42)" "(= (__ 5 1) 3)"]))
            (str "  (is (= (foo-bar-solution 2 4) 17))\n"
                 "  (is (= (foo-bar-solution 3 1) 42))\n"
                 "  (is (= (foo-bar-solution 5 1) 3))"))))
   (testing "formatting newlines"
-    (is (= (#'fp/expand-prob-tests
-             (assoc prob1 :tests ["(= (__ \\a)\r\n42)"]))
+    (is (= (#'fp/expand-problem-tests
+             (assoc problem-1 :tests ["(= (__ \\a)\r\n42)"]))
            "  (is (= (foo-bar-solution \\a)\n42))"))
-    (is (= (#'fp/expand-prob-tests
-             (assoc prob1 :tests ["(= (__ \\a)\n42)"]))
+    (is (= (#'fp/expand-problem-tests
+             (assoc problem-1 :tests ["(= (__ \\a)\n42)"]))
            "  (is (= (foo-bar-solution \\a)\n42))"))))
 
 (deftest has-problem-tests?
@@ -243,15 +225,15 @@
 
 (deftest prob-url
   (testing "zero"
-    (is (= (#'fp/prob-url 0) "http://4clojure.com/api/problem/0")))
+    (is (= (#'fp/problem-url 0) "http://4clojure.com/api/problem/0")))
   (testing "negative number"
-    (is (= (#'fp/prob-url -5) "http://4clojure.com/api/problem/-5")))
+    (is (= (#'fp/problem-url -5) "http://4clojure.com/api/problem/-5")))
   (testing "stringified number"
-    (is (= (#'fp/prob-url "5") "http://4clojure.com/api/problem/5")))
+    (is (= (#'fp/problem-url "5") "http://4clojure.com/api/problem/5")))
   (testing "positive number"
-    (is (= (#'fp/prob-url 1) "http://4clojure.com/api/problem/1"))
-    (is (= (#'fp/prob-url 42) "http://4clojure.com/api/problem/42"))
-    (is (= (#'fp/prob-url 133) "http://4clojure.com/api/problem/133"))))
+    (is (= (#'fp/problem-url 1) "http://4clojure.com/api/problem/1"))
+    (is (= (#'fp/problem-url 42) "http://4clojure.com/api/problem/42"))
+    (is (= (#'fp/problem-url 133) "http://4clojure.com/api/problem/133"))))
 
 (deftest get-tests
   (testing "empty file"
@@ -276,120 +258,109 @@
   (is (= (with-redefs [slurp (constantly "xY3")] (#'fp/get-src {:title "yo"}))
          "xY3")))
 
-(deftest write-problem-tests
+(deftest write-problem-tests-test
   (with-redefs [spit (fn [f code & _]
-                       (is (= "test/foo/core_test.clj" (. f getPath)))
+                       (is (= "test/foo/core_test.clj" (.getPath f)))
                        (is (= (str "\n\n"
-                                   ";; problem " (:prob-num prob1) "\n"
-                                   "(deftest can-foo-bar\n"
+                                   ";; problem " (:prob-num problem-1) "\n"
+                                   "(deftest foo-bar-solution-test\n"
                                    "  (is (= (foo-bar-solution 42) 21))\n"
                                    "  (is (= (foo-bar-solution 21) 42)))\n")
                               code)))]
-    (#'fp/write-problem-tests project-foo "" prob1)))
+    (#'fp/write-problem-tests! project-foo "" problem-1)))
 
-(deftest write-problem-src
+(deftest write-problem-src-test
   (with-redefs [spit (fn [f code & _]
-                       (is (= "src/foo/core.clj" (. f getPath)))
+                       (is (= "src/foo/core.clj" (.getPath f)))
                        (is (= (str "\n\n"
-                                   ";; problem " (:prob-num prob1) " (" (:difficulty prob1) ")\n"
+                                   ";; problem " (:prob-num problem-1) " (" (:difficulty problem-1) ")\n"
                                    ";; restrictions: f1, f2\n"
                                    "(def foo-bar-solution\n"
                                    "  (fn [& args] ;; update args as needed\n"
-                                   "  ;; write a foo bar\n"
-                                   "  nil))\n")
+                                   "    ;; write a foo bar\n"
+                                   "    nil))\n")
                               code)))]
-    (#'fp/write-problem-src project-foo prob1)))
+    (#'fp/write-problem-src! project-foo problem-1))
 
-(deftest write-problem-src-no-restrictions
-  (with-redefs [spit (fn [f code & _]
-                       (is (= "src/foo/core.clj" (. f getPath)))
-                       (is (= (str "\n\n"
-                                   ";; problem " (:prob-num prob1) " (" (:difficulty prob1) ")\n"
-                                   "(def foo-bar-solution\n"
-                                   "  (fn [& args] ;; update args as needed\n"
-                                   "  ;; write a foo bar\n"
-                                   "  nil))\n")
-                              code)))]
-    (#'fp/write-problem-src project-foo (dissoc prob1 :restricted))))
+  (testing "no restrictions"
+    (with-redefs [spit (fn [f code & _]
+                         (is (= "src/foo/core.clj" (.getPath f)))
+                         (is (= (str "\n\n"
+                                     ";; problem " (:prob-num problem-1) " (" (:difficulty problem-1) ")\n"
+                                     "(def foo-bar-solution\n"
+                                     "  (fn [& args] ;; update args as needed\n"
+                                     "    ;; write a foo bar\n"
+                                     "    nil))\n")
+                                code)))]
+      (#'fp/write-problem-src! project-foo (dissoc problem-1 :restricted)))))
 
-(deftest write-prob
-  ;; TODO factorize duplicate code here, but it seems that nested
-  ;; with-redefs-fn don’t work
+(deftest write-problem-test
+  ;; TODO factorize duplicate code here, but it seems that nested with-redefs-fn don’t work
   (testing "doesn’t write tests if they are already present"
-    (with-redefs-fn {#'fp/get-tests           (constantly "")
-                     #'fp/get-src             (constantly "")
-                     #'fp/has-problem-tests?  (constantly true)
-                     #'fp/has-problem-src?    (constantly false)
-                     #'fp/write-problem-tests (fn [& _]
+    (with-redefs-fn {#'fp/get-tests            (constantly "")
+                     #'fp/get-src              (constantly "")
+                     #'fp/has-problem-tests?   (constantly true)
+                     #'fp/has-problem-src?     (constantly false)
+                     #'fp/write-problem-tests! (fn [& _]
                                                 (is (= true false)
                                                     "should not write tests"))
-                     #'fp/write-problem-src   (constantly nil)
-                     #'println                (fn [s]
+                     #'fp/write-problem-src!   (constantly nil)
+                     #'println                 (fn [s]
                                                 (is (= s "tests already exist, skipping.")))}
-      #(#'fp/write-prob project-foo prob1)))
+      #(#'fp/write-problem! project-foo problem-1)))
   (testing "doesn’t write source function if it’s already present"
-    (with-redefs-fn {#'fp/get-tests           (constantly "")
-                     #'fp/get-src             (constantly "")
-                     #'fp/has-problem-tests?  (constantly false)
-                     #'fp/has-problem-src?    (constantly true)
-                     #'fp/write-problem-src   (fn [& _]
+    (with-redefs-fn {#'fp/get-tests            (constantly "")
+                     #'fp/get-src              (constantly "")
+                     #'fp/has-problem-tests?   (constantly false)
+                     #'fp/has-problem-src?     (constantly true)
+                     #'fp/write-problem-src!   (fn [& _]
                                                 (is (= true false)
                                                     "should not write in src"))
-                     #'fp/write-problem-tests (constantly nil)
-                     #'println                (fn [s]
+                     #'fp/write-problem-tests! (constantly nil)
+                     #'println                 (fn [s]
                                                 (is (= s "source already exists, skipping.")))}
-      #(#'fp/write-prob project-foo prob1)))
+      #(#'fp/write-problem! project-foo problem-1)))
   (testing "doesn’t write source and tests if they’re already present"
-    (with-redefs-fn {#'fp/get-tests           (constantly "")
-                     #'fp/get-src             (constantly "")
-                     #'fp/has-problem-tests?  (constantly true)
-                     #'fp/has-problem-src?    (constantly true)
-                     #'fp/write-problem-src   (fn [& _]
+    (with-redefs-fn {#'fp/get-tests            (constantly "")
+                     #'fp/get-src              (constantly "")
+                     #'fp/has-problem-tests?   (constantly true)
+                     #'fp/has-problem-src?     (constantly true)
+                     #'fp/write-problem-src!   (fn [& _]
                                                 (is (= true false)
                                                     "should not write in src"))
-                     #'fp/write-problem-tests (fn [& _]
+                     #'fp/write-problem-tests! (fn [& _]
                                                 (is (= true false)
                                                     "should not write tests"))
-                     #'println                (constantly nil)}
-      #(#'fp/write-prob project-foo prob1)))
+                     #'println                 (constantly nil)}
+      #(#'fp/write-problem! project-foo problem-1)))
   (testing "write both source and tests if they’re not already present"
     (let [write-tests-called? (atom false)
           write-src-called?   (atom false)]
-      (with-redefs-fn {#'fp/get-tests           (constantly "")
-                       #'fp/get-src             (constantly "")
-                       #'fp/has-problem-tests?  (constantly false)
-                       #'fp/has-problem-src?    (constantly false)
-                       #'fp/write-problem-src   (fn [& _] (swap! write-src-called? not))
-                       #'fp/write-problem-tests (fn [& _] (swap! write-tests-called? not))
-                       #'println                (constantly nil)}
+      (with-redefs-fn {#'fp/get-tests            (constantly "")
+                       #'fp/get-src              (constantly "")
+                       #'fp/write-problem-src!   (fn [& _] (reset! write-src-called? true))
+                       #'fp/write-problem-tests! (fn [& _] (reset! write-tests-called? true))
+                       #'println                 (constantly nil)}
         (fn []
-          (#'fp/write-prob project-foo prob1)
-          (is (= @write-tests-called? true))
-          (is (= @write-src-called? true)))))))
+          (#'fp/write-problem! project-foo problem-1)
+          (is (true? @write-tests-called?))
+          (is (true? @write-src-called?)))))))
 
 (deftest add-prob
   (testing "cannot get problem"
-    (with-redefs-fn {#'fp/fetch-prob-data (constantly nil)
-                     #'println            (assert-println "Cannot get problem 33.")}
+    (with-redefs-fn {#'fp/fetch-problem-data (constantly nil)
+                     #'println               (assert-println "Cannot get problem 33.")}
       (fn []
-        (#'fp/add-prob project-foo 33))))
-  (testing "got an exception while writing problem"
-    (with-redefs-fn {#'fp/fetch-prob-data (constantly prob1)
-                     #'fp/write-prob      (fn [& _] (throw (Exception. "foo")))
-                     #'println            (assert-println (str "An error occured when"
-                                                               " writing the problem."
-                                                               " foo"))}
-      (fn []
-        (#'fp/add-prob project-foo 42))))
+        (#'fp/add-problem! project-foo 33))))
 
   (testing "writing problem"
     (let [written (atom false)]
-      (with-redefs-fn {#'fp/fetch-prob-data (constantly prob1)
-                       #'fp/write-prob      (fn [& _] (swap! written not))
-                       #'println            (assert-println (str "Problem \"Foo Bar\""
-                                                                 " added!"))}
+      (with-redefs-fn {#'fp/fetch-problem-data (constantly problem-1)
+                       #'fp/write-problem!     (fn [& _] (swap! written not))
+                       #'println               (assert-println (str "Problem \"Foo Bar\""
+                                                                    " added!"))}
         (fn []
-          (#'fp/add-prob project-foo 42)
+          (#'fp/add-problem! project-foo 42)
           (is (= @written true)))))))
 
 (deftest open-prob-url
@@ -400,60 +371,60 @@
                                (swap! opened not)
                                (is (= u "http://www.4clojure.com/problem/42")))}
         (fn []
-          (#'fp/open-prob-url 42)
+          (#'fp/open-problem-url [42])
           (is (= @opened true))))))
 
   (testing "multiple probs"
-    (let [opened (atom #{})
-          probs  [42 37 25]]
+    (let [opened   (atom #{})
+          problems [42 37 25]]
       (with-redefs-fn {#'browse/browse-url (fn [u]
                                              (swap! opened #(conj % u)))}
         (fn []
-          (apply #'fp/open-prob-url probs)
+          (#'fp/open-problem-url problems)
           (is (= @opened
                  (into #{}
                        (map
                          #(str "http://www.4clojure.com/problem/" %)
-                         probs)))))))))
+                         problems)))))))))
 
 (deftest fore-prob
-  (let [proj {:foo :bar}]
+  (let [project {:foo :bar}]
     (testing "one prob"
       (let [added (atom false)
             n     "42"]
-        (with-redefs-fn {#'fp/add-prob (fn [prj prob-num]
-                                         (is (= prj proj))
-                                         (is (= prob-num n))
-                                         (swap! added not))}
+        (with-redefs-fn {#'fp/add-problem! (fn [prj prob-num]
+                                            (is (= prj project))
+                                            (is (= prob-num n))
+                                            (swap! added not))}
           (fn []
-            (fp/fore-prob proj n)
+            (fp/fore-prob project n)
             (is (= @added true))))))
 
     (testing "multiple probs"
       (let [cnt (atom 0)]
-        (with-redefs-fn {#'fp/add-prob (fn [prj _]
-                                         (is (= prj proj))
-                                         (swap! cnt inc))}
+        (with-redefs-fn {#'fp/add-problem! (fn [prj _]
+                                            (is (= prj project))
+                                            (swap! cnt inc))}
           (fn []
-            (fp/fore-prob proj "42" "17" "26" "32")
+            (fp/fore-prob project "42" "17" "26" "32")
             (is (= @cnt 4))))))
 
     (testing "opening one prob"
       (let [opened (atom false)
             n      "32"]
-        (with-redefs-fn {#'fp/open-prob-url (fn [& pn]
-                                              (is (= pn [n]))
-                                              (swap! opened not))}
+        (with-redefs-fn {#'fp/open-problem-url (fn [pn]
+                                                 (is (= pn [n]))
+                                                 (swap! opened not))}
           (fn []
-            (fp/fore-prob proj "open" n)
+            (fp/fore-prob project "open" n)
             (is (= @opened true))))))
 
     (testing "opening one prob"
-      (let [opened (atom [])
-            probs  ["34" "12" "17"]]
-        (with-redefs-fn {#'fp/open-prob-url (fn [& pn]
-                                              (is (= pn probs))
-                                              (swap! opened #(concat % probs)))}
+      (let [opened   (atom [])
+            problems ["34" "12" "17"]]
+        (with-redefs-fn {#'fp/open-problem-url (fn [pn]
+                                                 (is (= pn problems))
+                                                 (swap! opened #(concat % problems)))}
           (fn []
-            (fp/fore-prob proj "open" "34" "12" "17")
-            (is (= @opened probs))))))))
+            (fp/fore-prob project "open" "34" "12" "17")
+            (is (= @opened problems))))))))
